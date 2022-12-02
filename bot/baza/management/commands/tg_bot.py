@@ -230,44 +230,45 @@ def get_phone_number_my_objects(message):
 
     bot.send_message(
         message.chat.id,
-        f'У вас {total_count} объекта (-ов):\n'
+        f'У вас *{total_count}* объекта (-ов):\n'
         + f'квартир - {apartment_count},\n'
         + f'комнат - {room_count},\n'
         + f'домов - {house_count},\n'
         + f'таунхаусов - {townhouse_count},\n'
-        + f'участков - {land_count}'
+        + f'участков - {land_count}',
+        parse_mode="Markdown"
     )
     for item in apartment_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, {item.room_quantity} к.кв. '
+            f'id {item.pk}, *{item.room_quantity} к.кв.* '
             + f'{item.street_name} д.{item.number_of_house}, '
-            + f'{item.floor} этаж - {int(item.price)} ₽'
+            + f'{item.floor} этаж - *{int(item.price)} ₽*'
         )
 
     for item in room_queryset:
         bot.send_message(
             message.chat.id,
-            f'id{item.pk}, комн. {item.street_name} '
-            + f'д.{item.number_of_house}, {item.floor} этаж - {int(item.price)} ₽'
+            f'id {item.pk}, *комн.* {item.street_name} '
+            + f'д.{item.number_of_house}, {item.floor} этаж - *{int(item.price)} ₽*'
         )
 
     for item in house_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, Дом {item.microregion}, {item.street_name} - {int(item.price)} ₽'
+            f'id {item.pk}, *Дом* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*'
         )
 
     for item in townhouse_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, Таунхаус {item.microregion}, {item.street_name} - {int(item.price)} ₽'
+            f'id {item.pk}, *Таунхаус* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*'
         )
 
     for item in land_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, {item.microregion}, {item.street_name} - {int(item.price)} ₽'
+            f'id {item.pk}, *Участок* {item.microregion}, {item.street_name} - {int(item.price)} ₽'
         )
 
     # if total_count <= 5:
