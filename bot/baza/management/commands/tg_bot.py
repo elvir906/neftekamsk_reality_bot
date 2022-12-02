@@ -243,7 +243,7 @@ def get_phone_number_my_objects(message):
     for item in apartment_queryset:
         bot.send_message(
             message.chat.id,
-            f'🆔 {item.pk}, ✳️ *{item.room_quantity} к.кв.* '
+            f'🆔 {item.pk}, 🏡 *{item.room_quantity} к.кв.* '
             + f'{item.street_name} д.{item.number_of_house}, '
             + f'{item.floor} этаж - *{int(item.price)} ₽*',
             parse_mode="Markdown"
@@ -252,7 +252,7 @@ def get_phone_number_my_objects(message):
     for item in room_queryset:
         bot.send_message(
             message.chat.id,
-            f'🆔 {item.pk}, ✳️ *Комната* {item.street_name} '
+            f'🆔 {item.pk}, 🏡 *Комната* {item.street_name} '
             + f'д.{item.number_of_house}, {item.floor} этаж - *{int(item.price)} ₽*',
             parse_mode="Markdown"
         )
@@ -260,14 +260,14 @@ def get_phone_number_my_objects(message):
     for item in house_queryset:
         bot.send_message(
             message.chat.id,
-            f'🆔 {item.pk}, ✳️ *Дом* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*',
+            f'🆔 {item.pk}, 🏡 *Дом* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*',
             parse_mode="Markdown"
         )
 
     for item in townhouse_queryset:
         bot.send_message(
             message.chat.id,
-            f'🆔 {item.pk}, ✳️ *Таунхаус* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*',
+            f'🆔 {item.pk}, 🏡 *Таунхаус* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*',
             parse_mode="Markdown"
         )
 
