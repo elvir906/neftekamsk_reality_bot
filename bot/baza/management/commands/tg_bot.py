@@ -243,32 +243,37 @@ def get_phone_number_my_objects(message):
             message.chat.id,
             f'id {item.pk}, *{item.room_quantity} к.кв.* '
             + f'{item.street_name} д.{item.number_of_house}, '
-            + f'{item.floor} этаж - *{int(item.price)} ₽*'
+            + f'{item.floor} этаж - *{int(item.price)} ₽*',
+            parse_mode="Markdown"
         )
 
     for item in room_queryset:
         bot.send_message(
             message.chat.id,
             f'id {item.pk}, *комн.* {item.street_name} '
-            + f'д.{item.number_of_house}, {item.floor} этаж - *{int(item.price)} ₽*'
+            + f'д.{item.number_of_house}, {item.floor} этаж - *{int(item.price)} ₽*',
+            parse_mode="Markdown"
         )
 
     for item in house_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, *Дом* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*'
+            f'id {item.pk}, *Дом* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*',
+            parse_mode="Markdown"
         )
 
     for item in townhouse_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, *Таунхаус* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*'
+            f'id {item.pk}, *Таунхаус* {item.microregion}, {item.street_name} - *{int(item.price)} ₽*',
+            parse_mode="Markdown"
         )
 
     for item in land_queryset:
         bot.send_message(
             message.chat.id,
-            f'id {item.pk}, *Участок* {item.microregion}, {item.street_name} - {int(item.price)} ₽'
+            f'id {item.pk}, *Участок* {item.microregion}, {item.street_name} - {int(item.price)} ₽',
+            parse_mode="Markdown"
         )
 
     # if total_count <= 5:
