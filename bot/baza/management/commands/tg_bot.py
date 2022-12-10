@@ -1,6 +1,6 @@
 import datetime as dt
-import os
 import logging
+import os
 
 import psycopg2
 from baza.about_text import about_text
@@ -277,28 +277,6 @@ def get_phone_number_my_objects(message):
             f'🆔 {item.pk}, ✳️ *Участок* {item.microregion}, {item.street_name} - {int(item.price)} ₽',
             parse_mode="Markdown"
         )
-
-    # if total_count <= 5:
-    #     bot.send_message(
-    #         message.chat.id,
-    #         'Да... маловато будет 🙈. Надо ещё объектов наработать и в базу!\n'
-    #         + 'Ведь чем больше объектов, тем больше зарабатывает риелтор!\n'
-    #         + 'В агентстве "Регион" есть такой мастер Рауф 👴. Можешь у него спросить, как много объектов затащить 😅'
-    #     )
-
-    # if (total_count > 5) and (total_count <= 10):
-    #     bot.send_message(
-    #         message.chat.id,
-    #         'Ну... как сказать... Нормально, но ещё бы объектов для работы.\n'
-    #         + 'Ведь чем больше объектов, тем больше зарабатывает риелтор!\n'
-    #         + 'Спорим, у тебя всё равно меньше объектов, чем у мастера Димы Граменицкого 👴 с "Проспекта"? 😅'
-    #     )
-
-    # if (total_count > 15):
-    #     bot.send_message(
-    #         message.chat.id,
-    #         'Эй, полегче, ты  же не один риелтор в городе, оставь объектов и другим! 😅'
-    #     )
 
 
 @bot.message_handler(commands=['editprice'])
@@ -1795,5 +1773,6 @@ def callback_worker(callback):
         )
         bot.register_next_step_handler(callback.message, get_pk_edit_price)
 
-# bot.polling(none_stop=True, interval=0)
-bot.infinity_polling()
+
+bot.polling(none_stop=True)
+# bot.infinity_polling()
