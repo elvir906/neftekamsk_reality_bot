@@ -3,23 +3,21 @@ import os
 import re
 
 import django
-# import psycopg2
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from baza.answer_messages import message_texts
 from baza.db_worker import DB_Worker
-from baza.models import Apartment, House, Land, Room, TownHouse
+from baza.models import (Apartment, House, Individuals, Land, Room,
+                         Subscriptors, TownHouse)
 from baza.states import (CallbackOnStart, HouseCallbackStates,
                          LandCallbackStates, MyObjectsCallbackStates,
                          PriceEditCallbackStates, RoomCallbackStates,
                          TownHouseCallbackStates)
-# from baza.users import users
-from baza.utils import keyboards
+from baza.users import users
+from baza.utils import Output, keyboards
 from decouple import config
 from django.core.management.base import BaseCommand
-
-from baza.utils import Output
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'rest.settings')
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
@@ -65,30 +63,70 @@ async def get_statistics(message: types.Message):
     await message.answer(message_texts.on.get('statistics'))
 
 
+"""
+Раскоментить для платной подписки и нижнюю удалить
+Реагирует на частных риелторов
+"""
+# @dp.message_handler(commands=['searchobjects'])
+# async def search_objects(message: types.Message):
+#     """Ответ на кнопку просмотра базы"""
+
+#     individuals = [int(', '.join(
+#         user
+#     )) for user in Individuals.objects.all().values_list('user_id')]
+#     print(individuals)
+#     if message.from_id in individuals:
+#         await message.answer('Просмотр объектов доступно только по платной подписке на бот. Свяжитесь с @davletelvir')
+#     else:
+#         await message.answer(
+#             '🔻 Выберите категорию объектов для поиска',
+#             reply_markup=keyboards.get_category_keyboard()
+#         )
+
+"""Закоменьтить перед внедрением платной подписки"""
 @dp.message_handler(commands=['searchobjects'])
 async def search_objects(message: types.Message):
     """Ответ на кнопку просмотра базы"""
-
     await message.answer(
         '🔻 Выберите категорию объектов для поиска',
-        reply_markup=keyboards.get_category_keyboard()
+         reply_markup=keyboards.get_category_keyboard()
     )
 
 
+"""
+Раскоментить для платной подписки и нижнюю удалить
+реагирует на подписчиков
+"""
+# @dp.message_handler(commands=['addobject'])
+# async def add_object(message: types.Message):
+#     """Ответ на кнопку обавления объекта"""
+
+#     subscriptors = [int(', '.join(
+#         user
+#     )) for user in Subscriptors.objects.all().values_list('user_id')]
+
+#     if message.from_id not in subscriptors:
+#         await message.answer('Добавление объектов доступно только по платной подписке на бот. Свяжитесь с @davletelvir')
+#     else:
+#         await message.answer(
+#                 '🔻 Что желаете добавить?',
+#                 reply_markup=keyboards.add_category_keyboard()
+#             )
+
+"""Закоменьтить перед внедрением платной подписки"""
 @dp.message_handler(commands=['addobject'])
 async def add_object(message: types.Message):
     """Ответ на кнопку обавления объекта"""
-
     await message.answer(
-        '🔻 Что желаете добавить?',
-        reply_markup=keyboards.add_category_keyboard()
-    )
+            '🔻 Что желаете добавить?',
+            reply_markup=keyboards.add_category_keyboard()
+        )
 
 
 @dp.callback_query_handler(text="Квартиры")
 async def apartments(callback: types.CallbackQuery):
     """Ответ на кнопку поиска по квартирам"""
-
+    
     await callback.message.edit_text(
         '🔻 Выберите по количеству комнат',
         reply_markup=keyboards.get_rooms_count_keyboard()
@@ -2109,4 +2147,4 @@ async def price_updating_process(
             f'Ошибка при вводе новой цены, {e}'
         )
         await PriceEditCallbackStates.EP3.set()
-        await state.finish()
+    await state.finish()

@@ -1,6 +1,36 @@
 from django.db import models
 
 
+class Individuals(models.Model):
+    user_id = models.CharField(
+        max_length=15,
+        verbose_name='id'
+    )
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Имя'
+    )
+
+    class Meta:
+        verbose_name = 'Частный риелтор'
+        verbose_name_plural = 'Частные риелторы'
+
+
+class Subscriptors(models.Model):
+    user_id = models.CharField(
+        max_length=15,
+        verbose_name='Подписчики'
+    )
+    agency_name = models.CharField(
+        max_length=200,
+        verbose_name='Агентство недвижимости'
+    )
+
+    class Meta:
+        verbose_name = 'Подписчики'
+        verbose_name_plural = 'Подписчики'
+
+
 class Apartment(models.Model):
     room_quantity = models.DecimalField(
         verbose_name='Количество комнат',
