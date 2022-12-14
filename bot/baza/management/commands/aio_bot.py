@@ -1877,8 +1877,7 @@ async def my_objects(message: types.Message):
     """Ответ на кнопку просмотра объектов пользователя."""
 
     await message.answer(
-        '🔻 Введи свой номер телефона в формате 89ххххххххх '
-        + '(11 цифр номера, начиная с 8-ки)'
+        message_texts.on.get('phone_number_entering_text_for_editing')
     )
     await MyObjectsCallbackStates.MO1.set()
 
@@ -1955,8 +1954,7 @@ async def edit_price(message: types.Message):
     """Ответ на кнопку редактирования цены."""
 
     await message.answer(
-        '🔻 Введи свой номер телефона в формате 89ххххххххх '
-        + '(11 цифр номера, начиная с 8-ки)'
+        message_texts.on.get('phone_number_entering_text_for_editing')
     )
     await PriceEditCallbackStates.EP1.set()
 
