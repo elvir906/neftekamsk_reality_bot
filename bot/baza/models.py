@@ -419,6 +419,16 @@ class Land(models.Model):
         max_length=200,
         verbose_name='Ограждение'
     )
+    sauna = models.CharField(
+        max_length=200,
+        verbose_name='Наличие бани',
+        default='Нет'
+    )
+    garage = models.CharField(
+        max_length=200,
+        verbose_name='Наличие гаража',
+        default='Нет'
+    )
 
     class Meta:
         verbose_name = 'Участок'

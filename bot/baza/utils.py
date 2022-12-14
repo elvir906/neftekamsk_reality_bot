@@ -1,3 +1,5 @@
+import sys
+
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.types.inline_keyboard import InlineKeyboardButton
 from baza.models import Apartment, House, Land, Room, TownHouse
@@ -114,7 +116,6 @@ class keyboards():
         if object == 'room_house_floors':
             callback_data = [str(i) + '_rfloors' for i in range(1, 19)]
 
-
         # Генерация кнопок 18 этажей, шесть в три ряда.
         for j in range(0, 3):
             buttons = [InlineKeyboardButton(
@@ -124,35 +125,224 @@ class keyboards():
             keyboard.row(*buttons)
         return keyboard
 
-    def yes_no_keyboard(restriction: str):
+    def yes_no_keyboard(item: str):
+        """Генерация клавиатуры на да/нет по различным вопросам"""
+
         keyboard = InlineKeyboardMarkup()
         key_1 = InlineKeyboardButton(
-            text='Да', callback_data=f'yes_{restriction}'
+            text='Да', callback_data=f'yes_{item}'
         )
         key_2 = InlineKeyboardButton(
-            text='Нет', callback_data=f'no_{restriction}'
+            text='Нет', callback_data=f'no_{item}'
         )
         keyboard.row(key_1, key_2)
         return keyboard
 
+    def microregion_keyboard():
+        """Генерация клавиатуры на выбор микрорайона"""
+
+        keyboard = InlineKeyboardMarkup()
+        microregion_buttons_text = [
+            'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
+            'Марино', 'Телевышка', 'Лесная поляна',
+            'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
+            'Кутлинка', 'Новонагаево', 'Актанышбаш',
+            'Амзя', 'Карманово', 'Можары', 'Арлан',
+            'Зубовка', 'Кариево'
+        ]
+        buttons = [
+            InlineKeyboardButton(
+                text=microregion_buttons_text[i],
+                callback_data=microregion_buttons_text[i]
+                ) for i in range(0, len(microregion_buttons_text) - 1)
+        ]
+        keyboard.row(buttons[0], buttons[2])
+        keyboard.row(buttons[7], buttons[5])
+        keyboard.row(buttons[3], buttons[4], buttons[6])
+        keyboard.row(buttons[8], buttons[1])
+        keyboard.row(buttons[9], buttons[10], buttons[11])
+        keyboard.row(buttons[12], buttons[13], buttons[14])
+        keyboard.row(buttons[15], buttons[16])
+
+        return keyboard
+
+    def purpose_choise_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        key_1 = InlineKeyboardButton(text='ИЖС', callback_data='ИЖС')
+        key_2 = InlineKeyboardButton(text='СНТ, ДНТ', callback_data='СНТ, ДНТ')
+        key_3 = InlineKeyboardButton(text='ЛПХ', callback_data='ЛПХ')
+
+        keyboard.row(key_1, key_2, key_3)
+        return keyboard
+
+    def gaz_choise_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        key_1 = InlineKeyboardButton(
+            text='Газифицирован, дом отапливается',
+            callback_data='Газифицирован, дом отапливается'
+        )
+        key_3 = InlineKeyboardButton(
+            text='Улица газифицировна, дом - нет',
+            callback_data='Улица газифицировна, дом - нет'
+        )
+        key_4 = InlineKeyboardButton(
+            text='Улица не газифицирована',
+            callback_data='Улица не газифицирована'
+        )
+
+        keyboard.row(key_1)
+        keyboard.row(key_3)
+        keyboard.row(key_4)
+        return keyboard
+
+    def material_choice_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        material_buttons_text = [
+            'Кирпич',
+            'Заливной',
+            'Блок, облицованный кирпичом',
+            'Дерево',
+            'Дерево, облицованное кирпичом',
+            'Другое'
+        ]
+        buttons = [
+            InlineKeyboardButton(
+                text=material_buttons_text[i],
+                callback_data=material_buttons_text[i]
+                ) for i in range(0, len(material_buttons_text) - 1)
+        ]
+
+        for i in range(0, len(buttons)):
+            keyboard.row(buttons[i])
+        return keyboard
+
+    def water_choice_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        key_1 = InlineKeyboardButton(
+            text='Да, центральное водоснабжение',
+            callback_data='Водоснабжение центральное'
+        )
+        key_2 = InlineKeyboardButton(
+            text='На участке есть колодец',
+            callback_data='Колодец'
+        )
+        key_3 = InlineKeyboardButton(
+            text='Вода проходит по улице, в дом - нет',
+            callback_data='Вода по улице'
+        )
+        key_4 = InlineKeyboardButton(text='Воды нет', callback_data='Воды нет')
+
+        keyboard.row(key_1)
+        keyboard.row(key_2)
+        keyboard.row(key_3)
+        keyboard.row(key_4)
+        return keyboard
+
+    def road_choice_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        key_1 = InlineKeyboardButton(
+            text='Да, асфальт',
+            callback_data='Асфальт'
+        )
+        key_2 = InlineKeyboardButton(
+            text='Да, неплохая насыпная дорога',
+            callback_data='Неплохая насыпная дорога'
+        )
+        key_3 = InlineKeyboardButton(
+            text='Да, неплохая грунтовая дорога',
+            callback_data='Неплохая грунтовая дорога'
+        )
+        key_4 = InlineKeyboardButton(
+            text='Движение к дому затруднено',
+            callback_data='Бездорожье, затрудняющее проезд'
+        )
+        keyboard.row(key_1)
+        keyboard.row(key_2)
+        keyboard.row(key_3)
+        keyboard.row(key_4)
+        return keyboard
+
+    # def price_editing_keyboard():
+    #     keyboard = InlineKeyboardMarkup()
+    #     buttons = [
+    #         '1к.кв.', '2к.кв.', '3к.кв.', '4к.кв.', '5к.кв.',
+    #         'Комната', 'Дом', 'Таунхаус', 'Участок'
+    #     ]
+    #     for i in range(0, len(buttons)):
+    #         keyboard.add(
+    #            InlineKeyboardButton(
+    #               buttons[i], callback_data=f'edit_{buttons[i]}'
+    #               )
+    #         )
+    #     return keyboard
+
+    def objects_list_keyboard(searching_phone_number: str):
+        keyboard = InlineKeyboardMarkup()
+
+        apartment_queryset = Apartment.objects.filter(
+            phone_number=searching_phone_number
+        )
+        room_queryset = Room.objects.filter(
+            phone_number=searching_phone_number
+        )
+        house_queryset = House.objects.filter(
+            phone_number=searching_phone_number
+        )
+        townhouse_queryset = TownHouse.objects.filter(
+            phone_number=searching_phone_number
+        )
+        land_queryset = Land.objects.filter(
+            phone_number=searching_phone_number
+        )
+
+        buttons = []
+        callback_data_string = []
+
+        for item in apartment_queryset:
+            buttons.append(f'ID {item.pk} {item.room_quantity}к.кв. '
+                           + f'{item.street_name} {item.number_of_house} '
+                           + f'- {int(item.price)} ₽')
+            callback_data_string.append([item.pk, 'apartment'])
+
+        for item in room_queryset:
+            buttons.append(f'ID {item.pk} Комната {item.street_name} '
+                           + f'{item.number_of_house} - {int(item.price)} ₽')
+            callback_data_string.append([item.pk, 'room'])
+
+        for item in house_queryset:
+            buttons.append(f'ID {item.pk}  Дом {item.microregion} '
+                           + f'{item.street_name} - {int(item.price)} ₽')
+            callback_data_string.append([item.pk, 'house'])
+
+        for item in townhouse_queryset:
+            buttons.append(f'ID {item.pk}  Дом {item.microregion} '
+                           + f'{item.street_name} - {int(item.price)} ₽')
+            callback_data_string.append([item.pk, 'townhouse'])
+
+        for item in land_queryset:
+            buttons.append(f'ID {item.pk}  Дом {item.microregion} '
+                           + f'{item.street_name} {item.number_of_land} - '
+                           + f'{int(item.price)} ₽')
+            callback_data_string.append([item.pk, 'land'])
+
+        for i in range(0, len(buttons)):
+            keyboard.row(
+                InlineKeyboardButton(
+                    buttons[i],
+                    callback_data=f'{callback_data_string[i][0]} '
+                    + f'{callback_data_string[i][1]}'
+                )
+            )
+        # print(callback_data_string)
+        return keyboard
+
 
 class Output():
-    def c_m_e(item):
-        """Дети. Ипотека. Обременение"""
-        result = ['Нет', 'Нет', 'Нет']
-
-        if item.children:
-            result[0] = 'Есть'
-
-        if item.mortage:
-            result[1] = 'Есть'
-
-        if item.encumbrance:
-            result[2] = 'Есть'
-
-        return result
-
     def false_or_true(item: bool) -> str:
         if item:
             return 'Есть'
         return 'Нет'
+
+# Строку в название класса
+    def str_to_class(str):
+        return getattr(sys.modules[__name__], str)
