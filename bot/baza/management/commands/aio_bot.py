@@ -14,7 +14,6 @@ from baza.states import (CallbackOnStart, HouseCallbackStates,
                          LandCallbackStates, MyObjectsCallbackStates,
                          PriceEditCallbackStates, RoomCallbackStates,
                          TownHouseCallbackStates)
-from baza.users import users
 from baza.utils import Output, keyboards
 from decouple import config
 from django.core.management.base import BaseCommand
@@ -76,20 +75,23 @@ async def get_statistics(message: types.Message):
 #     )) for user in Individuals.objects.all().values_list('user_id')]
 #     print(individuals)
 #     if message.from_id in individuals:
-#         await message.answer('Просмотр объектов доступно только по платной подписке на бот. Свяжитесь с @davletelvir')
+#         await message.answer('Просмотр объектов доступно только по '
+#               + 'платной подписке на бот. Свяжитесь с @davletelvir')
 #     else:
 #         await message.answer(
 #             '🔻 Выберите категорию объектов для поиска',
 #             reply_markup=keyboards.get_category_keyboard()
 #         )
 
-"""Закоменьтить перед внедрением платной подписки"""
+"""
+!!!Закоменьтить перед внедрением платной подписки
+"""
 @dp.message_handler(commands=['searchobjects'])
 async def search_objects(message: types.Message):
     """Ответ на кнопку просмотра базы"""
     await message.answer(
         '🔻 Выберите категорию объектов для поиска',
-         reply_markup=keyboards.get_category_keyboard()
+        reply_markup=keyboards.get_category_keyboard()
     )
 
 
@@ -106,14 +108,17 @@ async def search_objects(message: types.Message):
 #     )) for user in Subscriptors.objects.all().values_list('user_id')]
 
 #     if message.from_id not in subscriptors:
-#         await message.answer('Добавление объектов доступно только по платной подписке на бот. Свяжитесь с @davletelvir')
+#         await message.answer('Добавление объектов доступно только'
+#       + ' по платной подписке на бот. Свяжитесь с @davletelvir')
 #     else:
 #         await message.answer(
 #                 '🔻 Что желаете добавить?',
 #                 reply_markup=keyboards.add_category_keyboard()
 #             )
 
-"""Закоменьтить перед внедрением платной подписки"""
+"""
+!!!Закоменьтить перед внедрением платной подписки
+"""
 @dp.message_handler(commands=['addobject'])
 async def add_object(message: types.Message):
     """Ответ на кнопку обавления объекта"""
@@ -126,7 +131,7 @@ async def add_object(message: types.Message):
 @dp.callback_query_handler(text="Квартиры")
 async def apartments(callback: types.CallbackQuery):
     """Ответ на кнопку поиска по квартирам"""
-    
+
     await callback.message.edit_text(
         '🔻 Выберите по количеству комнат',
         reply_markup=keyboards.get_rooms_count_keyboard()
@@ -251,7 +256,10 @@ async def add_apartment(callback: types.CallbackQuery, state: FSMContext):
     'add_3_room', 'add_4_room',
     'add_5_room'
 ])
-async def entering_room_count(callback: types.CallbackQuery, state: FSMContext):
+async def entering_room_count(
+    callback: types.CallbackQuery,
+    state: FSMContext
+):
     """Ответ на нажатие выбора количества комнат при добавлении кв."""
 
     await state.update_data(room_count=callback.data[4])
@@ -288,9 +296,11 @@ async def entering_house_number(message: types.Message, state: FSMContext):
 
 
 @dp.callback_query_handler(state=CallbackOnStart.Q3, text=[
-    '1_afloor', '2_afloor', '3_afloor', '4_afloor', '5_afloor', '6_afloor',
-    '7_afloor', '8_afloor', '9_afloor', '10_afloor', '11_afloor', '12_afloor',
-    '13_afloor', '14_afloor', '15_afloor', '16_afloor', '17_afloor', '18_afloor',
+    '1_afloor', '2_afloor', '3_afloor', '4_afloor',
+    '5_afloor', '6_afloor', '7_afloor', '8_afloor',
+    '9_afloor', '10_afloor', '11_afloor', '12_afloor',
+    '13_afloor', '14_afloor', '15_afloor', '16_afloor',
+    '17_afloor', '18_afloor',
 ])
 async def entering_floor(callback: types.CallbackQuery, state: FSMContext):
     """Ответ на кнопку выбора этажа квартиры"""
@@ -298,15 +308,19 @@ async def entering_floor(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(floor=callback.data.removesuffix('_afloor'))
     await callback.message.edit_text(
         '🔻 Введите количество этажей',
-        reply_markup=keyboards.floor_number_or_count_keyboard('apartment_house_floors')
+        reply_markup=keyboards.floor_number_or_count_keyboard(
+            'apartment_house_floors'
+        )
     )
     await CallbackOnStart.next()
 
 
 @dp.callback_query_handler(state=CallbackOnStart.Q4, text=[
-    '1_afloors', '2_afloors', '3_afloors', '4_afloors', '5_afloors', '6_afloors',
-    '7_afloors', '8_afloors', '9_afloors', '10_afloors', '11_afloors', '12_afloors',
-    '13_afloors', '14_afloors', '15_afloors', '16_afloors', '17_afloors', '18_afloors',
+    '1_afloors', '2_afloors', '3_afloors', '4_afloors',
+    '5_afloors', '6_afloors', '7_afloors', '8_afloors',
+    '9_afloors', '10_afloors', '11_afloors', '12_afloors',
+    '13_afloors', '14_afloors', '15_afloors', '16_afloors',
+    '17_afloors', '18_afloors',
 ])
 async def entering_floors(callback: types.CallbackQuery, state: FSMContext):
     """Ответ на кнопку выбора этажности дома"""
@@ -314,61 +328,44 @@ async def entering_floors(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(floors=callback.data.removesuffix('_afloors'))
 
     await callback.message.edit_text(
-        '🔻 Введите площадь квартиры, как в указано в свидетельстве или выписке'
+        '🔻 Введите площадь квартиры, как в'
+        + ' указано в свидетельстве или выписке'
     )
     await CallbackOnStart.next()
 
 
 @dp.message_handler(state=CallbackOnStart.Q5)
 async def entering_area(message: types.Message, state: FSMContext):
-    """Запись площади квартиры"""
-
     try:
         answer = float(message.text)
         await state.update_data(area=answer)
         await message.answer(
-            '🔻 Напишите цену.\n\nПросто полную цену цифрами, '
-            + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.\n\nЕсли недвижимость '
-            + 'стоит 3400000 рублей, значит так и пишите 3400000'
+            message_texts.on.get('enter_price')
         )
         await CallbackOnStart.next()
 
     except (ValueError) as e:
         await CallbackOnStart.Q5.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('area_entering_error')
         )
         logging.error(f'{e}')
 
 
 @dp.message_handler(state=CallbackOnStart.Q6)
 async def entering_price(message: types.Message, state: FSMContext):
-    """Запись цены"""
-
     try:
         answer = int(message.text)
         await state.update_data(price=answer)
         await message.answer(
-            '🔻 Добавьте небольшое описание квартиры.\n\nПожалуйста, '
-            + ' руководствуйтесь принципом "Краткость - сестра таланта" '
-            + ' и не дублируйте '
-            + 'в описании информацию о квартире, такие как этаж, цена и др. '
-            + '\n\nТолько кратко, самую суть - состояние.'
+            message_texts.entering_description_text('квартиры')
         )
         await CallbackOnStart.next()
 
     except (ValueError) as e:
         await CallbackOnStart.Q6.set()
         await message.answer(
-            '🤔 🤔 Вы ошиблись при вводе значения цены. Цену'
-            + ' следует вводить цифрами без разделителя "." '
-            + 'и без указания единицы измерения.'
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('price_entering_error')
         )
         logging.error(f'{e}')
 
@@ -434,9 +431,7 @@ async def entering_mortage(callback: types.CallbackQuery, state: FSMContext):
     if callback.data == 'no_mortage':
         await state.update_data(mortage=False)
     await callback.message.edit_text(
-        '🔻 Напишите свой номер '
-        + 'телефона в формате 89ххххххххх, по которому с'
-        + 'вами можно будет связаться'
+        message_texts.on.get('phone_number_entering_text')
     )
     await CallbackOnStart.next()
 
@@ -448,17 +443,12 @@ async def entering_phone_number(message: types.Message, state: FSMContext):
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(phone_number=message.text)
         await message.answer(
-            '🔻 В каком агентстве вы трудитесь?\n\n'
-            + 'Если вы частный риелтор, то напишите "Частный"'
+            message_texts.on.get('agency_entering_text')
         )
         await CallbackOnStart.next()
     else:
         await message.answer(
-            '🔻 Вы ошиблись с вводом номера телефона. '
-            + f'Введённый вами номер телефона {message.text} '
-            + 'не соответствует формату "89ххххххххх". '
-            + '\n'
-            + 'Введите просто 11 цифр номера, начиная с 8.'
+            message_texts.phone_number_entering_error(message.text)
         )
         logging.error('Ошибка при вводе номера телефона')
         await CallbackOnStart.Q11.set()
@@ -487,8 +477,7 @@ async def entering_rialtor_name(message: types.Message, state: FSMContext):
     # ЗАПИСЬ В БАЗУ
     if not DB_Worker.apartment_to_db(data):
         await message.answer(
-            'К сожаления, в работе бота произошла ошибка. Попробуйте еще раз. '
-            + 'Если ошибка повторится, напишите об этом @davletelvir'
+            message_texts.on.get('sorry_about_error')
         )
     else:
         await message.answer(
@@ -543,9 +532,11 @@ async def enetering_rooms_house_number(
 
 
 @dp.callback_query_handler(state=RoomCallbackStates.R3, text=[
-    '1_rfloor', '2_rfloor', '3_rfloor', '4_rfloor', '5_rfloor', '6_rfloor',
-    '7_rfloor', '8_rfloor', '9_rfloor', '10_rfloor', '11_rfloor', '12_rfloor',
-    '13_rfloor', '14_rfloor', '15_rfloor', '16_rfloor', '17_rfloor', '18_rfloor',
+    '1_rfloor', '2_rfloor', '3_rfloor', '4_rfloor',
+    '5_rfloor', '6_rfloor', '7_rfloor', '8_rfloor',
+    '9_rfloor', '10_rfloor', '11_rfloor', '12_rfloor',
+    '13_rfloor', '14_rfloor', '15_rfloor', '16_rfloor',
+    '17_rfloor', '18_rfloor',
 ])
 async def entering_room_floor(callback: types.CallbackQuery, state: FSMContext):
     """Ответ на кнопку выбора этажа комнаты"""
@@ -559,9 +550,11 @@ async def entering_room_floor(callback: types.CallbackQuery, state: FSMContext):
 
 
 @dp.callback_query_handler(state=RoomCallbackStates.R4, text=[
-    '1_rfloors', '2_rfloors', '3_rfloors', '4_rfloors', '5_rfloors', '6_rfloors',
-    '7_rfloors', '8_rfloors', '9_rfloors', '10_rfloors', '11_rfloors', '12_rfloors',
-    '13_rfloors', '14_rfloors', '15_rfloors', '16_rfloors', '17_rfloors', '18_rfloors',
+    '1_rfloors', '2_rfloors', '3_rfloors', '4_rfloors',
+    '5_rfloors', '6_rfloors', '7_rfloors', '8_rfloors',
+    '9_rfloors', '10_rfloors', '11_rfloors', '12_rfloors',
+    '13_rfloors', '14_rfloors', '15_rfloors', '16_rfloors',
+    '17_rfloors', '18_rfloors',
 ])
 async def entering_room_floors(
     callback: types.CallbackQuery, state: FSMContext
@@ -579,61 +572,42 @@ async def entering_room_floors(
 async def enetering_rooms_area(
     message: types.Message, state: FSMContext
 ):
-    """Запись площади комнаты"""
-
     try:
         answer = float(message.text)
         await state.update_data(room_area=answer)
         await message.answer(
-            '🔻 Напишите цену.\n\nПросто полную цену цифрами, '
-            + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.\n\nЕсли недвижимость '
-            + 'стоит 3400000 рублей, значит так и пишите 3400000'
+            message_texts.on.get('enter_price')
         )
         await RoomCallbackStates.next()
 
     except (ValueError) as e:
         await RoomCallbackStates.R5.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('area_emntering_error')
         )
         logging.error(f'{e}')
 
 
 @dp.message_handler(state=RoomCallbackStates.R6)
 async def entering_room_price(message: types.Message, state: FSMContext):
-    """Запись цены"""
-
     try:
         answer = int(message.text)
         await state.update_data(room_price=answer)
         await message.answer(
-            '🔻 Добавьте небольшое описание комнаты.\n\nПожалуйста, '
-            + ' руководствуйтесь принципом "Краткость - сестра таланта" '
-            + ' и не дублируйте '
-            + 'в описании информацию о квартире, такие как этаж, цена и др. '
-            + '\n\nТолько кратко, самую суть - состояние.'
+            message_texts.entering_description_text('комнаты')
         )
         await RoomCallbackStates.next()
 
     except (ValueError) as e:
         await RoomCallbackStates.R6.set()
         await message.answer(
-            '🤔 🤔 Вы ошиблись при вводе значения цены. Цену'
-            + ' следует вводить цифрами без разделителя "." '
-            + 'и без указания единицы измерения.'
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.om.get('price_entering_error')
         )
         logging.error(f'{e}')
 
 
 @dp.message_handler(state=RoomCallbackStates.R7)
 async def entering_room_description(message: types.Message, state: FSMContext):
-    """Запись состояния"""
 
     answer = message.text
     await state.update_data(room_description=answer)
@@ -651,7 +625,6 @@ async def entering_room_description(message: types.Message, state: FSMContext):
 async def entering_room_encumbrance(
     callback: types.CallbackQuery, state: FSMContext
 ):
-    """Запись наличия обременения"""
 
     if callback.data == 'yes_room_encumbrance':
         await state.update_data(room_encumbrance=True)
@@ -669,7 +642,6 @@ async def entering_room_encumbrance(
     text=['yes_room_children', 'no_room_children']
 )
 async def entering_room_children(callback: types.CallbackQuery, state: FSMContext):
-    """Запись наличия детей"""
 
     if callback.data == 'yes_room_children':
         await state.update_data(room_children=True)
@@ -687,38 +659,29 @@ async def entering_room_children(callback: types.CallbackQuery, state: FSMContex
     text=['yes_room_mortage', 'no_room_mortage']
 )
 async def entering_room_mortage(callback: types.CallbackQuery, state: FSMContext):
-    """Запись возможности покупки в ипотеку"""
 
     if callback.data == 'yes_room_mortage':
         await state.update_data(room_mortage=True)
     if callback.data == 'no_room_mortage':
         await state.update_data(room_mortage=False)
     await callback.message.edit_text(
-        '🔻 Напишите свой номер '
-        + 'телефона в формате 89ххххххххх, по которому с'
-        + 'вами можно будет связаться'
+        message_texts.on.get('phone_number_entering_text')
     )
     await RoomCallbackStates.next()
 
 
 @dp.message_handler(state=RoomCallbackStates.R11)
 async def entering_room_phone_number(message: types.Message, state: FSMContext):
-    """Запись номера телефона"""
 
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(room_phone_number=message.text)
         await message.answer(
-            '🔻 В каком агентстве вы трудитесь?\n\n'
-            + 'Если вы частный риелтор, то напишите "Частный"'
+            message_texts.on.get('agency_entering_text')
         )
         await RoomCallbackStates.next()
     else:
         await message.answer(
-            '🔻 Вы ошиблись с вводом номера телефона. '
-            + f'Введённый вами номер телефона {message.text} '
-            + 'не соответствует формату "89ххххххххх". '
-            + '\n'
-            + 'Введите просто 11 цифр номера, начиная с 8'
+            message_texts.phone_number_entering_error(message.text)
         )
         logging.error("Ошибка при вводе номера телефона")
         await RoomCallbackStates.R11.set()
@@ -726,7 +689,6 @@ async def entering_room_phone_number(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=RoomCallbackStates.R12)
 async def entering_room_agency_name(message: types.Message, state: FSMContext):
-    """Запись названия агентства"""
 
     answer = message.text.title()
     await state.update_data(room_agency_name=answer)
@@ -738,7 +700,6 @@ async def entering_room_agency_name(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=RoomCallbackStates.R13)
 async def entering_room_rialtor_name(message: types.Message, state: FSMContext):
-    """Запись имени риелтора и вывод результирующего текста"""
 
     answer = message.text.title()
     await state.update_data(room_rieltor_name=answer)
@@ -747,8 +708,7 @@ async def entering_room_rialtor_name(message: types.Message, state: FSMContext):
     # ЗАПИСЬ В БАЗУ
     if not DB_Worker.room_to_db(data):
         await message.answer(
-            'К сожаления, в работе бота произошла ошибка. Попробуйте еще раз. '
-            + 'Если ошибка повторится, напишите об этом @davletelvir'
+            message_texts.on.get('sorry_about_error')
         )
     else:
         await message.answer(
@@ -1003,11 +963,7 @@ async def entering_house_land_area(message: types.Message, state: FSMContext):
     except (ValueError) as e:
         await HouseCallbackStates.H12.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('area_emntering_error')
         )
         logging.error(f'{e}')
 
@@ -1018,20 +974,14 @@ async def entering_house_price(message: types.Message, state: FSMContext):
         answer = float(message.text)
         await state.update_data(house_land_area=answer)
         await message.answer(
-            '🔻 Напишите цену.\n\nПросто полную цену цифрами, '
-            + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.\n\nЕсли недвижимость '
-            + 'стоит 3400000 рублей, значит так и пишите 3400000'
+            message_texts.on.get('enter_price')
         )
         await HouseCallbackStates.next()
 
     except (ValueError) as e:
         await HouseCallbackStates.H13.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('area_emntering_error')
         )
         logging.error(f'{e}')
 
@@ -1042,22 +992,14 @@ async def entering_house_description(message: types.Message, state: FSMContext):
         answer = int(message.text)
         await state.update_data(house_price=answer)
         await message.answer(
-            '🔻 Добавьте небольшое описание дома.\n\nПожалуйста, '
-            + ' руководствуйтесь принципом "Краткость - сестра таланта" '
-            + ' и не дублируйте '
-            + 'в описании информацию о доме, такие как площадь, цена и др. '
-            + '\n\nТолько кратко, самую суть - состояние.'
+            message_texts.entering_description_text('дома')
         )
         await HouseCallbackStates.next()
 
     except (ValueError) as e:
         await HouseCallbackStates.H14.set()
         await message.answer(
-            '🤔 🤔 Вы ошиблись при вводе значения цены. Цену'
-            + ' следует вводить цифрами без разделителя "." '
-            + 'и без указания единицы измерения.'
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('price_entering_error')
         )
         logging.error(f'{e}')
 
@@ -1123,9 +1065,7 @@ async def entering_house_phone_number(
     if callback.data == 'no_house_mortage':
         await state.update_data(house_mortage=False)
     await callback.message.edit_text(
-        '🔻 Напишите свой номер '
-        + 'телефона в формате 89ххххххххх, по которому с'
-        + 'вами можно будет связаться'
+        message_texts.on.clear('phone_number_entering_text')
     )
     await HouseCallbackStates.next()
 
@@ -1137,17 +1077,12 @@ async def entering_house_agency_name(
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(house_phone_number=message.text)
         await message.answer(
-            '🔻 В каком агентстве вы трудитесь?\n\n'
-            + 'Если вы частный риелтор, то напишите "Частный"'
+            message_texts.on.get('agency_entering_text')
         )
         await HouseCallbackStates.next()
     else:
         await message.answer(
-            '🔻 Вы ошиблись с вводом номера телефона. '
-            + f'Введённый вами номер телефона {message.text} '
-            + 'не соответствует формату "89ххххххххх". '
-            + '\n'
-            + 'Введите просто 11 цифр номера, начиная с 8'
+            message_texts.phone_number_entering_error(message.text)
         )
         logging.error('Ошибка при вводе номера телефона')
         await HouseCallbackStates.H19.set()
@@ -1174,8 +1109,7 @@ async def house_result_text(message: types.Message, state: FSMContext):
     # запись в базу
     if not DB_Worker.house_to_db(data):
         await message.answer(
-            'К сожаления, в работе бота произошла ошибка. Попробуйте еще раз. '
-            + 'Если ошибка повторится, напишите об этом @davletelvir'
+            message_texts.on.get('sorry_about_error')
         )
     else:
         await message.answer(
@@ -1411,8 +1345,7 @@ async def entering_townhouse_area(
 ):
     await state.update_data(townhouse_road=callback.data)
     await callback.message.edit_text(
-        '🔻 Введите площадь, как в указано в свидетельстве или выписке. '
-        + 'Используйте разделитель "." для дробной и целой частей.'
+        message_texts.on.get('area_entering_text')
     )
     await TownHouseCallbackStates.next()
 
@@ -1432,11 +1365,7 @@ async def entering_townhouse_land_area(message: types.Message, state: FSMContext
     except (ValueError) as e:
         await TownHouseCallbackStates.T12.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('area_emntering_error')
         )
         logging.error(f'{e}')
 
@@ -1447,20 +1376,14 @@ async def entering_townhouse_price(message: types.Message, state: FSMContext):
         answer = float(message.text)
         await state.update_data(townhouse_land_area=answer)
         await message.answer(
-            '🔻 Напишите цену.\n\nПросто полную цену цифрами, '
-            + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.\n\nЕсли недвижимость '
-            + 'стоит 3400000 рублей, значит так и пишите 3400000'
+            message_texts.on.get('enter_price')
         )
         await TownHouseCallbackStates.next()
 
     except (ValueError) as e:
         await TownHouseCallbackStates.T13.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('area_emntering_error')
         )
         logging.error(f'{e}')
 
@@ -1471,22 +1394,14 @@ async def entering_townhouse_description(message: types.Message, state: FSMConte
         answer = int(message.text)
         await state.update_data(townhouse_price=answer)
         await message.answer(
-            '🔻 Добавьте небольшое описание таунхауса.\n\nПожалуйста, '
-            + ' руководствуйтесь принципом "Краткость - сестра таланта" '
-            + ' и не дублируйте '
-            + 'в описании информацию о таунхаусе, такие как площадь, цена и др. '
-            + '\n\nТолько кратко, самую суть - состояние.'
+            message_texts.entering_description_text('таунхауса')
         )
         await TownHouseCallbackStates.next()
 
     except (ValueError) as e:
         await TownHouseCallbackStates.T14.set()
         await message.answer(
-            '🤔 🤔 Вы ошиблись при вводе значения цены. Цену'
-            + ' следует вводить цифрами без разделителя "." '
-            + 'и без указания единицы измерения.'
-            + ''
-            + 'Попробуйте ввести значение заново:'
+            message_texts.on.get('price_entering_error')
         )
         logging.error(f'{e}')
 
@@ -1552,9 +1467,7 @@ async def entering_townhouse_phone_number(
     if callback.data == 'no_townhouse_mortage':
         await state.update_data(townhouse_mortage=False)
     await callback.message.edit_text(
-        '🔻 Напишите свой номер '
-        + 'телефона в формате 89ххххххххх, по которому с'
-        + 'вами можно будет связаться'
+        message_texts.on.get('phone_number_entering_text')
     )
     await TownHouseCallbackStates.next()
 
@@ -1566,17 +1479,12 @@ async def entering_townhouse_agency_name(
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(townhouse_phone_number=message.text)
         await message.answer(
-            '🔻 В каком агентстве вы трудитесь?\n\n'
-            + 'Если вы частный риелтор, то напишите "Частный"'
+            message_texts.on.get('agency_entering_text')
         )
         await TownHouseCallbackStates.next()
     else:
         await message.answer(
-            '🔻 Вы ошиблись с вводом номера телефона. '
-            + f'Введённый вами номер телефона {message.text} '
-            + 'не соответствует формату "89ххххххххх". '
-            + '\n'
-            + 'Введите просто 11 цифр номера, начиная с 8'
+            message_texts.phone_number_entering_error(message.text)
         )
         await TownHouseCallbackStates.T19.set()
 
@@ -1602,8 +1510,7 @@ async def townhouse_result_text(message: types.Message, state: FSMContext):
     # запись в базу
     if not DB_Worker.townhouse_to_db(data):
         await message.answer(
-            'К сожаления, в работе бота произошла ошибка. Попробуйте еще раз. '
-            + 'Если ошибка повторится, напишите об этом @davletelvir'
+            message_texts.on.get('sorry_about_error')
         )
     else:
         await message.answer(
@@ -1820,19 +1727,13 @@ async def entering_land_price(message: types.Message, state: FSMContext):
         answer = float(message.text)
         await state.update_data(land_area=answer)
         await message.answer(
-            '🔻 Напишите цену.\n\nПросто полную цену цифрами, '
-            + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.\n\nЕсли недвижимость '
-            + 'стоит 3400000 рублей, значит так и пишите 3400000'
+            message_texts.on.get('enter_price')
         )
         await LandCallbackStates.next()
     except (ValueError) as e:
         await LandCallbackStates.L11.set()
         await message.answer(
-            '🤔 Вы ошиблись при вводе значения площади.\n\nПлощадь'
-            + ' следует вводить цифрами и использовать разделитель "." для '
-            + 'дробных значений. Так же НЕ указывайтье единицы измерения. '
-            + ''
-            + '🔻 Попробуйте ввести значение заново:'
+            message_texts.on.get('area_emntering_error')
         )
         logging.error(f'{e}')
 
@@ -1843,22 +1744,14 @@ async def entering_land_description(message: types.Message, state: FSMContext):
         answer = int(message.text)
         await state.update_data(land_price=answer)
         await message.answer(
-            '🔻 Добавьте небольшое описание.\n\nПожалуйста, '
-            + ' руководствуйтесь принципом "Краткость - сестра таланта" '
-            + ' и не дублируйте '
-            + 'в описании информацию об участке, такие как площадь, цена и др. '
-            + '\n\nТолько кратко, самую суть - состояние.'
+            message_texts.entering_description_text('участка')
         )
         await LandCallbackStates.next()
 
     except (ValueError) as e:
         await LandCallbackStates.L12.set()
         await message.answer(
-            '🤔 🤔 Вы ошиблись при вводе значения цены. Цену'
-            + ' следует вводить цифрами без разделителя "." '
-            + 'и без указания единицы измерения.'
-            + ''
-            + '🔻 Попробуйте ввести значение заново:'
+            message_texts.on.get('price_entering_error')
         )
         logging.error(f'{e}')
 
@@ -1924,9 +1817,7 @@ async def entering_land_phone_number(
     if callback.data == 'no_land_mortage':
         await state.update_data(land_mortage=False)
     await callback.message.edit_text(
-        '🔻 Напишите свой номер '
-        + 'телефона в формате 89ххххххххх, по которому с'
-        + 'вами можно будет связаться'
+        message_texts.on.get('phone_number_entering_text')
     )
     await LandCallbackStates.next()
 
@@ -1938,17 +1829,12 @@ async def entering_land_agency_name(
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(land_phone_number=message.text)
         await message.answer(
-            '🔻 В каком агентстве вы трудитесь?\n\n'
-            + 'Если вы частный риелтор, то напишите "Частный"'
+            message_texts.on.get('agency_entering_text')
         )
         await LandCallbackStates.next()
     else:
         await message.answer(
-            'Вы ошиблись с вводом номера телефона. '
-            + f'Введённый вами номер телефона {message.text} '
-            + 'не соответствует формату "89ххххххххх". '
-            + '\n'
-            + '🔻 Введите просто 11 цифр номера, начиная с 8'
+            message_texts.phone_number_entering_error(message.text)
         )
         await LandCallbackStates.L17.set()
 
@@ -1974,8 +1860,7 @@ async def land_result_text(message: types.Message, state: FSMContext):
     # запись в базу
     if not DB_Worker.land_to_db(data):
         await message.answer(
-            'К сожаления, в работе бота произошла ошибка. Попробуйте еще раз. '
-            + 'Если ошибка повторится, напишите об этом @davletelvir'
+            message_texts.on.get('sorry_about_error')
         )
     else:
         await message.answer(
