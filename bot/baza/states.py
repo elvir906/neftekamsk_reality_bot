@@ -16,6 +16,7 @@ class CallbackOnStart(StatesGroup):
     Q11 = State()
     Q12 = State()
     Q13 = State()
+    Q14 = State()
 
 
 class RoomCallbackStates(StatesGroup):
@@ -32,6 +33,7 @@ class RoomCallbackStates(StatesGroup):
     R11 = State()
     R12 = State()
     R13 = State()
+    R14 = State()
 
 
 class HouseCallbackStates(StatesGroup):
@@ -56,6 +58,7 @@ class HouseCallbackStates(StatesGroup):
     H19 = State()
     H20 = State()
     H21 = State()
+    H22 = State()
 
 
 class TownHouseCallbackStates(StatesGroup):
@@ -80,6 +83,7 @@ class TownHouseCallbackStates(StatesGroup):
     T19 = State()
     T20 = State()
     T21 = State()
+    T22 = State()
 
 
 class LandCallbackStates(StatesGroup):
@@ -102,6 +106,7 @@ class LandCallbackStates(StatesGroup):
     L17 = State()
     L18 = State()
     L19 = State()
+    L20 = State()
 
 
 class MyObjectsCallbackStates(StatesGroup):

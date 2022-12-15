@@ -102,6 +102,11 @@ class Apartment(models.Model):
         auto_now_add=False,
         verbose_name='Дата публикации'
     )
+    photo_id = models.CharField(
+        verbose_name='ID фотографий',
+        max_length=500,
+        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+    )
 
     class Meta:
         verbose_name = 'Квартира'
@@ -168,6 +173,11 @@ class Room(models.Model):
     )
     mortage = models.BooleanField(
         verbose_name='Ипотека'
+    )
+    photo_id = models.CharField(
+        verbose_name='ID фотографий',
+        max_length=500,
+        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
     )
 
     class Meta:
@@ -268,6 +278,11 @@ class House(models.Model):
         max_length=200,
         verbose_name='Ограждение'
     )
+    photo_id = models.CharField(
+        verbose_name='ID фотографий',
+        max_length=500,
+        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+    )
 
     class Meta:
         verbose_name = 'дом'
@@ -367,6 +382,11 @@ class TownHouse(models.Model):
         max_length=200,
         verbose_name='Ограждение'
     )
+    photo_id = models.CharField(
+        verbose_name='ID фотографий',
+        max_length=500,
+        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+    )
 
     class Meta:
         verbose_name = 'Таунхаус'
@@ -458,6 +478,11 @@ class Land(models.Model):
         max_length=200,
         verbose_name='Наличие гаража',
         default='Нет'
+    )
+    photo_id = models.CharField(
+        verbose_name='ID фотографий',
+        max_length=500,
+        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
     )
 
     class Meta:

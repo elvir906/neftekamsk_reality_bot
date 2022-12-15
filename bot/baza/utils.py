@@ -1,6 +1,7 @@
 import sys
 
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import (ContentType, InlineKeyboardMarkup, InputFile,
+                           MediaGroup, Message)
 from aiogram.types.inline_keyboard import InlineKeyboardButton
 from baza.models import Apartment, House, Land, Room, TownHouse
 
@@ -262,20 +263,6 @@ class keyboards():
         keyboard.row(key_4)
         return keyboard
 
-    # def price_editing_keyboard():
-    #     keyboard = InlineKeyboardMarkup()
-    #     buttons = [
-    #         '1к.кв.', '2к.кв.', '3к.кв.', '4к.кв.', '5к.кв.',
-    #         'Комната', 'Дом', 'Таунхаус', 'Участок'
-    #     ]
-    #     for i in range(0, len(buttons)):
-    #         keyboard.add(
-    #            InlineKeyboardButton(
-    #               buttons[i], callback_data=f'edit_{buttons[i]}'
-    #               )
-    #         )
-    #     return keyboard
-
     def objects_list_keyboard(searching_phone_number: str):
         keyboard = InlineKeyboardMarkup()
 
@@ -307,23 +294,23 @@ class keyboards():
         for item in room_queryset:
             buttons.append(f'ID {item.pk} Комната {item.street_name} '
                            + f'{item.number_of_house} - {int(item.price)} ₽')
-            callback_data_string.append([item.pk, 'room'])
+            callback_data_string.append([item.pk, 'Room'])
 
         for item in house_queryset:
             buttons.append(f'ID {item.pk}  Дом {item.microregion} '
                            + f'{item.street_name} - {int(item.price)} ₽')
-            callback_data_string.append([item.pk, 'house'])
+            callback_data_string.append([item.pk, 'House'])
 
         for item in townhouse_queryset:
-            buttons.append(f'ID {item.pk}  Дом {item.microregion} '
+            buttons.append(f'ID {item.pk}  Таунхаус {item.microregion} '
                            + f'{item.street_name} - {int(item.price)} ₽')
-            callback_data_string.append([item.pk, 'townhouse'])
+            callback_data_string.append([item.pk, 'TownHouse'])
 
         for item in land_queryset:
-            buttons.append(f'ID {item.pk}  Дом {item.microregion} '
+            buttons.append(f'ID {item.pk}  Участок {item.microregion} '
                            + f'{item.street_name} {item.number_of_land} - '
                            + f'{int(item.price)} ₽')
-            callback_data_string.append([item.pk, 'land'])
+            callback_data_string.append([item.pk, 'Land'])
 
         for i in range(0, len(buttons)):
             keyboard.row(
@@ -333,7 +320,15 @@ class keyboards():
                     + f'{callback_data_string[i][1]}'
                 )
             )
-        # print(callback_data_string)
+        return keyboard
+
+    def pagination_keyboard(p, pp, cat):
+        keyboard = InlineKeyboardMarkup()
+        keyboard.row(
+            InlineKeyboardButton(text='⬅', callback_data=f'{cat}_prev'),
+            InlineKeyboardButton(text=f'{p} из {pp}', callback_data='1'),
+            InlineKeyboardButton(text='➡', callback_data=f'{cat}_next')
+        )
         return keyboard
 
 
@@ -343,6 +338,13 @@ class Output():
             return 'Есть'
         return 'Нет'
 
-# Строку в название класса
+    # Строку в название класса
     def str_to_class(str):
         return getattr(sys.modules[__name__], str)
+
+    # отправка альбома
+    async def send_album(message: Message, photofile_id_group: list):
+        album = MediaGroup()
+        for photo in photofile_id_group:
+            album.attach_photo(photo)
+        await message.answer_media_group(media=album)
