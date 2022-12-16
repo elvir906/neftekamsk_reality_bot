@@ -6,15 +6,15 @@ import django
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType
+from aiogram.types import ContentType, MediaGroup
 from baza.answer_messages import message_texts
 from baza.db_worker import DB_Worker
 from baza.models import (Apartment, House, Individuals, Land, Room,
                          Subscriptors, TownHouse)
-from baza.states import (CallbackOnStart, HouseCallbackStates,
-                         LandCallbackStates, MyObjectsCallbackStates,
-                         PriceEditCallbackStates, RoomCallbackStates,
-                         TownHouseCallbackStates)
+from baza.states import (CallbackOnStart, EditCallbackStates,
+                         HouseCallbackStates, LandCallbackStates,
+                         MyObjectsCallbackStates, PriceEditCallbackStates,
+                         RoomCallbackStates, TownHouseCallbackStates)
 from baza.utils import Output, keyboards
 from decouple import config
 from django.core.management.base import BaseCommand
@@ -39,9 +39,36 @@ class Command(BaseCommand):
         executor.start_polling(dp, skip_updates=True)
 
 
-@dp.message_handler(content_types=ContentType.PHOTO)
-async def send_photofile_id(message: types.Message):
-    await message.answer(message.photo[-1].file_id)
+@dp.message_handler(commands=['photo'])
+async def photo(message: types.Message, state: FSMContext):
+    await message.answer(
+        'Загрузи'
+    )
+    await EditCallbackStates.E1.set()
+
+
+@dp.message_handler(content_types=ContentType.PHOTO, state=EditCallbackStates.E1)
+async def my_brand(message: types.Message, state: FSMContext):
+    if not await state.get_data():
+        print('2')
+        await state.update_data(photo=[message.photo[-1].file_id])
+        await bot.send_message(message.chat.id, "Укажите название")
+        print('0')
+        await EditCallbackStates.E2.set()
+    else:
+        print('3')
+        photo_list = await state.get_data()
+        photos = photo_list.get("photo")
+        photos.append(message.photo[-1].file_id)
+        print('1')
+        await state.update_data(photo=photos)
+
+
+@dp.message_handler(state=EditCallbackStates.E2)
+async def my_model(message: types.Message, state: FSMContext):
+    photos = await state.get_data()
+    print(photos.get('photo'))
+    await state.finish()
 
 
 @dp.message_handler(commands=['deleteobject'])
@@ -429,77 +456,87 @@ async def apartment_search_result(
     callback: types.CallbackQuery,
     state: FSMContext
 ):
-    """Ответ на кнопку просмотра квартир ПАГИНАЦИЯ"""
+    """Ответ на кнопку просмотра квартир"""
 
     room_count = callback.data.removesuffix('-комнатные')
-    query_set = Apartment.objects.filter(
-        room_quantity=int(room_count)
-    ).order_by('-pub_date')
-    pages_count = query_set.count()
-
     await callback.message.answer(
         f'✳ Вот, что я нашёл по *{room_count}-комнатным*:',
         parse_mode="Markdown",
     )
 
     """Старое отображение по списком сообщениями"""
-    # query_set = Apartment.objects.filter(
-    #     room_quantity=int(room_count)
-    # ).order_by('-pub_date')
-    # for item in query_set:
-    #     await callback.message.answer(
-    #         message_texts.apartments_search_result_text(int(room_count), item),
-    #         parse_mode='Markdown'
-    #     )
+    query_set = Apartment.objects.filter(
+        room_quantity=int(room_count)
+    ).order_by('-pub_date')
+    for item in query_set:
 
-    if query_set:
-        page = 1
-        await callback.message.answer(
-            message_texts.apartments_search_result_text(
+        album = MediaGroup()
+        # album.attach_photo(item.photo_id)
+        album.attach_photo(
+            item.photo_id,
+            caption=message_texts.apartments_search_result_text(
                 int(room_count),
-                query_set[page - 1]
-            ),
-            reply_markup=keyboards.pagination_keyboard(
-                1, pages_count,
-                'apartment'
+                item
             ),
             parse_mode="Markdown"
         )
-        await state.update_data(
-            page=page,
-            pages_count=pages_count,
-            query_set=query_set,
-            room_count=room_count
-        )
+
+        await callback.message.answer_media_group(media=album)
+
+    """Отображение каруселью"""
+    # query_set = Apartment.objects.filter(
+    #     room_quantity=int(room_count)
+    # ).order_by('-pub_date')
+    # pages_count = query_set.count()
+
+    # if query_set:
+    #     page = 1
+    #     await callback.message.answer(
+    #         message_texts.apartments_search_result_text(
+    #             int(room_count),
+    #             query_set[page - 1]
+    #         ),
+    #         reply_markup=keyboards.pagination_keyboard(
+    #             1, pages_count,
+    #             'apartment'
+    #         ),
+    #         parse_mode="Markdown"
+    #     )
+    #     await state.update_data(
+    #         page=page,
+    #         pages_count=pages_count,
+    #         query_set=query_set,
+    #         room_count=room_count
+    #     )
 
 
-@dp.callback_query_handler(text=['apartment_prev', 'apartment_next'])
-async def apartment_next(callback: types.CallbackQuery, state: FSMContext):
-    """ПАГИНАЦИЯ"""
-    try:
-        data = await state.get_data()
-        if callback.data == 'apartment_prev':
-            page = data.get('page') - 1
-        elif callback.data == 'apartment_next':
-            page = data.get('page') + 1
+# @dp.callback_query_handler(text=['apartment_prev', 'apartment_next'])
+# async def apartment_next(callback: types.CallbackQuery, state: FSMContext):
+#     """ПАГИНАЦИЯ"""
+#     try:
+#         data = await state.get_data()
+#         if callback.data == 'apartment_prev':
+#             page = data.get('page') - 1
+#         elif callback.data == 'apartment_next':
+#             page = data.get('page') + 1
 
-        if (page > 0) and (page <= data.get('pages_count')):
+#         if (page > 0) and (page <= data.get('pages_count')):
 
-            await state.update_data(page=page)
-            await callback.message.edit_text(
-                message_texts.apartments_search_result_text(
-                    int(data.get('room_count')),
-                    data.get('query_set')[page - 1]
-                ),
-                reply_markup=keyboards.pagination_keyboard(
-                    page, data.get('pages_count'), 'apartment'
-                ),
-                parse_mode='Markdown'
-            )
-    except IndexError:
-        pass
-    except ValueError:
-        pass
+#             await state.update_data(page=page)
+#             await callback.message.edit_text(
+#                 message_texts.apartments_search_result_text(
+#                     int(data.get('room_count')),
+#                     data.get('query_set')[page - 1]
+#                 ),
+#                 reply_markup=keyboards.pagination_keyboard(
+#                     page, data.get('pages_count'), 'apartment'
+#                 ),
+#                 parse_mode='Markdown'
+#             )
+#     except IndexError:
+#         pass
+#     except ValueError:
+#         pass
 
 
 #   С ЭТОГО МЕСТА ОПРОС ПО КВАРТИРЕ
@@ -731,23 +768,46 @@ async def entering_agency_name(message: types.Message, state: FSMContext):
     )
     await CallbackOnStart.next()
 
+
 @dp.message_handler(state=CallbackOnStart.Q13)
-async def export_photos(message: types.Message, state: FSMContext):
+async def entering_rieltor_name(message: types.Message, state: FSMContext):
     answer = message.text.title()
+    global flag # костыля для работы загрузки фото
+    flag = False
     await state.update_data(rieltor_name=answer)
     await message.answer(
-        '🔻 Загрузите не более 4х фото квартиры (значок 📎 ниже и правее)'
+        '🔻 Загрузите до 10 фот квартиры (значок 📎)'
     )
-    await CallbackOnStart.next()
+    await CallbackOnStart.Q14.set()
 
 
-@dp.message_handler(state=CallbackOnStart.Q14)
-async def entering_rialtor_name(message: types.Message, state: FSMContext):
-    """Запись имени риелтора и вывод результирующего текста"""
+@dp.message_handler(state=CallbackOnStart.Q14, content_types=ContentType.PHOTO)
+async def upload_photos(message: types.Message, state: FSMContext):
+    """Загрузка фото магия"""
+    global flag
+    # if not await state.get_data():
+    if not flag:
+        print(1)
+        await state.update_data(photo=[message.photo[-1].file_id])
+        flag = True
+        await bot.send_message(message.chat.id, "Укажите название")
+        print(2)
+        await CallbackOnStart.Q15.set()
+    else:
+        print(3)
+        photo_list = await state.get_data()
+        flag = True
+        photos = photo_list.get("photo")
+        photos.append(message.photo[-1].file_id)
+        print(4)
+        await state.update_data(photo=photos)
 
-    answer = message.text
-    await state.update_data(photo_ids=answer)
+
+@dp.message_handler(state=CallbackOnStart.Q15)
+async def base_updating(message: types.Message, state: FSMContext):
+
     data = await state.get_data()
+    print(data.get('photo'))
 
     # ЗАПИСЬ В БАЗУ
     if not DB_Worker.apartment_to_db(data):
@@ -2307,9 +2367,3 @@ async def price_updating_process(
             f'Ошибка при вводе новой цены, {e}'
         )
         await PriceEditCallbackStates.EP3.set()
-
-
-@dp.message_handler(commands=['photo'])
-async def send_photo(message: types.Message):
-    await message.answer('вот то самое фото:',)
-    await dp.bot.send_photo(chat_id=message.from_user.id, photo='AgACAgIAAxkBAAIgbWOaw7-hTfykrHj74P2peTnHmi5QAALEvjEb1EDYSLa5mH0_9_4eAQADAgADdwADLAQ')

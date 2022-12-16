@@ -341,10 +341,3 @@ class Output():
     # Строку в название класса
     def str_to_class(str):
         return getattr(sys.modules[__name__], str)
-
-    # отправка альбома
-    async def send_album(message: Message, photofile_id_group: list):
-        album = MediaGroup()
-        for photo in photofile_id_group:
-            album.attach_photo(photo)
-        await message.answer_media_group(media=album)

@@ -103,9 +103,9 @@ class Apartment(models.Model):
         verbose_name='Дата публикации'
     )
     photo_id = models.CharField(
-        verbose_name='ID фотографий',
+        verbose_name='ID фото',
         max_length=500,
-        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
     )
 
     class Meta:
@@ -175,9 +175,9 @@ class Room(models.Model):
         verbose_name='Ипотека'
     )
     photo_id = models.CharField(
-        verbose_name='ID фотографий',
+        verbose_name='ID фото',
         max_length=500,
-        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
     )
 
     class Meta:
@@ -279,9 +279,9 @@ class House(models.Model):
         verbose_name='Ограждение'
     )
     photo_id = models.CharField(
-        verbose_name='ID фотографий',
+        verbose_name='ID фото',
         max_length=500,
-        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
     )
 
     class Meta:
@@ -383,9 +383,9 @@ class TownHouse(models.Model):
         verbose_name='Ограждение'
     )
     photo_id = models.CharField(
-        verbose_name='ID фотографий',
+        verbose_name='ID фото',
         max_length=500,
-        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
     )
 
     class Meta:
@@ -480,9 +480,9 @@ class Land(models.Model):
         default='Нет'
     )
     photo_id = models.CharField(
-        verbose_name='ID фотографий',
+        verbose_name='ID фото',
         max_length=500,
-        default='AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ'
+        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
     )
 
     class Meta:

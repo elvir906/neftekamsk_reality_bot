@@ -31,7 +31,7 @@ class DB_Worker():
                 if item != 'reality_category':
                     query_data = query_data + (state_data[item],)
             query_data = query_data + (pub_date,)
-            query = 'INSERT INTO baza_apartment (room_quantity, street_name, number_of_house, floor, number_of_floors, area, price, description, encumbrance, children, mortage, phone_number, agency, author, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            query = 'INSERT INTO baza_apartment (room_quantity, street_name, number_of_house, floor, number_of_floors, area, price, description, encumbrance, children, mortage, phone_number, agency, author, photo_id, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             cursor.execute(query, query_data)
             db_connection.commit()
             return True

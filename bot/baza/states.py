@@ -17,6 +17,7 @@ class CallbackOnStart(StatesGroup):
     Q12 = State()
     Q13 = State()
     Q14 = State()
+    Q15 = State()
 
 
 class RoomCallbackStates(StatesGroup):
@@ -118,3 +119,8 @@ class PriceEditCallbackStates(StatesGroup):
     EP2 = State()
     EP3 = State()
     EP4 = State()
+
+class EditCallbackStates(StatesGroup):
+    E1 = State()
+    E2 = State()
+    E3 = State()
