@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 
@@ -102,10 +103,9 @@ class Apartment(models.Model):
         auto_now_add=False,
         verbose_name='Дата публикации'
     )
-    photo_id = models.CharField(
-        verbose_name='ID фото',
-        max_length=500,
-        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
+    photo_id = ArrayField(
+        models.CharField(max_length=100),
+        blank=True
     )
 
     class Meta:
@@ -174,10 +174,9 @@ class Room(models.Model):
     mortage = models.BooleanField(
         verbose_name='Ипотека'
     )
-    photo_id = models.CharField(
-        verbose_name='ID фото',
-        max_length=500,
-        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
+    photo_id = ArrayField(
+        models.CharField(max_length=100),
+        blank=True
     )
 
     class Meta:
@@ -278,10 +277,9 @@ class House(models.Model):
         max_length=200,
         verbose_name='Ограждение'
     )
-    photo_id = models.CharField(
-        verbose_name='ID фото',
-        max_length=500,
-        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
+    photo_id = ArrayField(
+        models.CharField(max_length=100),
+        blank=True
     )
 
     class Meta:
@@ -382,10 +380,9 @@ class TownHouse(models.Model):
         max_length=200,
         verbose_name='Ограждение'
     )
-    photo_id = models.CharField(
-        verbose_name='ID фото',
-        max_length=500,
-        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
+    photo_id = ArrayField(
+        models.CharField(max_length=100),
+        blank=True
     )
 
     class Meta:
@@ -479,10 +476,9 @@ class Land(models.Model):
         verbose_name='Наличие гаража',
         default='Нет'
     )
-    photo_id = models.CharField(
-        verbose_name='ID фото',
-        max_length=500,
-        default='[AgACAgIAAxkBAAIgfmOa2LfSqhWFbSd3cezejErLCUPQAAIWvzEb1EDYSPq4knc5HwhjAQADAgADeQADLAQ]'
+    photo_id = ArrayField(
+        models.CharField(max_length=100),
+        blank=True
     )
 
     class Meta:

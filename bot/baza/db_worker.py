@@ -50,7 +50,7 @@ class DB_Worker():
                 if item != 'room_reality_category':
                     query_data = query_data + (state_data[item],)
             query_data = query_data + (pub_date,)
-            query = 'INSERT INTO baza_room (street_name, number_of_house, floor, number_of_floors, area, price, description, encumbrance, children, mortage, phone_number, agency_name, author, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            query = 'INSERT INTO baza_room (street_name, number_of_house, floor, number_of_floors, area, price, description, encumbrance, children, mortage, phone_number, agency_name, author, photo_id, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             cursor.execute(query, query_data)
             db_connection.commit()
             return True
@@ -69,7 +69,7 @@ class DB_Worker():
                 if item != 'house_reality_category':
                     query_data = query_data + (state_data[item],)
             query_data = query_data + (pub_date,)
-            query = 'INSERT INTO baza_house (microregion, street_name, purpose, finish, material, gaz, water, sauna, garage, fence, road, area, area_of_land, price, description, encumbrance, children, mortage, phone_number, agency_name, author, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            query = 'INSERT INTO baza_house (microregion, street_name, purpose, finish, material, gaz, water, sauna, garage, fence, road, area, area_of_land, price, description, encumbrance, children, mortage, phone_number, agency_name, author, photo_id, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             cursor.execute(query, query_data)
             db_connection.commit()
             return True
@@ -88,7 +88,7 @@ class DB_Worker():
                 if item != 'townhouse_reality_category':
                     query_data = query_data + (state_data[item],)
             query_data = query_data + (pub_date,)
-            query = 'INSERT INTO baza_townhouse (microregion, street_name, purpose, finish, material, gaz, water, sauna, garage, fence, road, area, area_of_land, price, description, encumbrance, children, mortage, phone_number, agency_name, author, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            query = 'INSERT INTO baza_townhouse (microregion, street_name, purpose, finish, material, gaz, water, sauna, garage, fence, road, area, area_of_land, price, description, encumbrance, children, mortage, phone_number, agency_name, author, photo_id, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             cursor.execute(query, query_data)
             db_connection.commit()
             return True
@@ -107,7 +107,7 @@ class DB_Worker():
                 if item != 'land_reality_category':
                     query_data = query_data + (state_data[item],)
             query_data = query_data + (pub_date,)
-            query = 'INSERT INTO baza_land (microregion, street_name, number_of_land, purpose, gaz, water, sauna, garage, fence, road, area_of_land, price, description, encumbrance, children, mortage, phone_number, agency_name, author, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            query = 'INSERT INTO baza_land (microregion, street_name, number_of_land, purpose, gaz, water, sauna, garage, fence, road, area_of_land, price, description, encumbrance, children, mortage, phone_number, agency_name, author, photo_id, pub_date) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
             cursor.execute(query, query_data)
             db_connection.commit()
             return True

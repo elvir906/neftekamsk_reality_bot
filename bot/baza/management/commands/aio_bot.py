@@ -6,7 +6,7 @@ import django
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, MediaGroup
+from aiogram.types import ContentType, MediaGroup, Message, CallbackQuery
 from baza.answer_messages import message_texts
 from baza.db_worker import DB_Worker
 from baza.models import (Apartment, House, Individuals, Land, Room,
@@ -39,52 +39,25 @@ class Command(BaseCommand):
         executor.start_polling(dp, skip_updates=True)
 
 
-@dp.message_handler(commands=['photo'])
-async def photo(message: types.Message, state: FSMContext):
-    await message.answer(
-        'Загрузи'
-    )
-    await EditCallbackStates.E1.set()
-
-
-@dp.message_handler(content_types=ContentType.PHOTO, state=EditCallbackStates.E1)
-async def my_brand(message: types.Message, state: FSMContext):
-    if not await state.get_data():
-        print('2')
-        await state.update_data(photo=[message.photo[-1].file_id])
-        await bot.send_message(message.chat.id, "Укажите название")
-        print('0')
-        await EditCallbackStates.E2.set()
-    else:
-        print('3')
-        photo_list = await state.get_data()
-        photos = photo_list.get("photo")
-        photos.append(message.photo[-1].file_id)
-        print('1')
-        await state.update_data(photo=photos)
-
-
-@dp.message_handler(state=EditCallbackStates.E2)
-async def my_model(message: types.Message, state: FSMContext):
-    photos = await state.get_data()
-    print(photos.get('photo'))
-    await state.finish()
-
-
 @dp.message_handler(commands=['deleteobject'])
-async def delete_object(message: types.Message):
+async def delete_object(message: Message):
     """Ответ на кнопку удаления объекта."""
 
     await message.answer(message_texts.on.get('delete'))
 
+@dp.message_handler(commands=['aqidel'])
+async def history_is_lie(message: Message):
+    await message.answer(
+        message_texts.aqidel()
+    )
 
 @dp.message_handler(commands=['start'])
-async def start(message: types.Message):
+async def start(message: Message):
     await message.answer(message_texts.on.get('start'))
 
 
 @dp.message_handler(commands=['about'])
-async def about(message: types.Message):
+async def about(message: Message):
     """Ответ на кнопку информации о боте."""
 
     await message.answer(
@@ -94,7 +67,7 @@ async def about(message: types.Message):
 
 
 @dp.message_handler(commands=['getstatistics'])
-async def get_statistics(message: types.Message):
+async def get_statistics(message: Message):
     """Ответ на кнопку просмотра статистики."""
 
     await message.answer(message_texts.on.get('statistics'))
@@ -105,7 +78,7 @@ async def get_statistics(message: types.Message):
 Реагирует на частных риелторов
 """
 # @dp.message_handler(commands=['searchobjects'])
-# async def search_objects(message: types.Message):
+# async def search_objects(message: Message):
 #     """Ответ на кнопку просмотра базы"""
 
 #     individuals = [int(', '.join(
@@ -125,9 +98,22 @@ async def get_statistics(message: types.Message):
 !!!Закоменьтить перед внедрением платной подписки
 """
 @dp.message_handler(commands=['searchobjects'])
-async def search_objects(message: types.Message):
-    """Ответ на кнопку просмотра базы"""
+async def search_objects(message: Message):
     await message.answer(
+        '🔻 Выберите один из двух форматов просмотра объектов:\n'
+        + '*Каскадная* - все объекты вываливаются в чат, *с фото*.\n'
+        + '*Карусель* - лаконичное перелистывание, но *без фото*.',
+        reply_markup=keyboards.carousel_or_cascade_keyboard(),
+        parse_mode="Markdown"
+    )
+
+
+@dp.callback_query_handler(text=['cascade', 'carousel'])
+async def cascade(callback: types.CallbackQuery, state: FSMContext):
+    """Ответ на кнопку просмотра базы в каскадной форме"""
+    await state.reset_data()
+    await state.update_data(view_form=callback.data)
+    await callback.message.answer(
         '🔻 Выберите категорию объектов для поиска',
         reply_markup=keyboards.get_category_keyboard()
     )
@@ -138,7 +124,7 @@ async def search_objects(message: types.Message):
 реагирует на подписчиков
 """
 # @dp.message_handler(commands=['addobject'])
-# async def add_object(message: types.Message):
+# async def add_object(message: Message):
 #     """Ответ на кнопку обавления объекта"""
 
 #     subscriptors = [int(', '.join(
@@ -158,7 +144,7 @@ async def search_objects(message: types.Message):
 !!!Закоменьтить перед внедрением платной подписки
 """
 @dp.message_handler(commands=['addobject'])
-async def add_object(message: types.Message):
+async def add_object(message: Message):
     """Ответ на кнопку обавления объекта"""
     await message.answer(
             '🔻 Что желаете добавить?',
@@ -191,24 +177,41 @@ async def rooms(callback: types.CallbackQuery, state: FSMContext):
         parse_mode="Markdown"
     )
 
-    """Старый вид отображения по сообщениям"""
-    # for item in query_set:
-    #     await callback.message.answer(
-    #         message_texts.room_search_result_text(item),
-    #         parse_mode='Markdown'
-    #     )
-    if query_set:
-        page = 1
-        await callback.message.answer(
-            message_texts.room_search_result_text(query_set[page - 1]),
-            reply_markup=keyboards.pagination_keyboard(1, pages_count, 'room'),
-            parse_mode="Markdown"
-        )
-        await state.update_data(
-            page=page,
-            pages_count=pages_count,
-            query_set=query_set
-        )
+    data = await state.get_data()
+
+    """Вид отображения по сообщениям"""
+    if data.get('view_form') == 'cascade':
+
+        for item in query_set:
+            album = MediaGroup()
+            photo_list = item.photo_id
+            for photo_id in photo_list:
+                if photo_id == photo_list[-1]:
+                    album.attach_photo(
+                        photo_id,
+                        caption=message_texts.room_search_result_text(
+                            item=item
+                        ),
+                        parse_mode="Markdown"
+                    )
+                else:
+                    album.attach_photo(photo_id)
+            await callback.message.answer_media_group(media=album)
+
+    """Вид отображения каскадом"""
+    if data.get('view_form') == 'carousel':
+        if query_set:
+            page = 1
+            await callback.message.answer(
+                message_texts.room_search_result_text(query_set[page - 1]),
+                reply_markup=keyboards.pagination_keyboard(1, pages_count, 'room'),
+                parse_mode="Markdown"
+            )
+            await state.update_data(
+                page=page,
+                pages_count=pages_count,
+                query_set=query_set
+            )
 
 
 @dp.callback_query_handler(text=['room_prev', 'room_next'])
@@ -251,25 +254,40 @@ async def houses(callback: types.CallbackQuery, state: FSMContext):
         parse_mode="Markdown"
     )
 
-    """Старый вид отображения по сообщениям"""
-    # query_set = House.objects.order_by('-pub_date')
-    # for item in query_set:
-    #     await callback.message.answer(
-    #         message_texts.house_search_result_text(item),
-    #         parse_mode='Markdown'
-    #     )
-    if query_set:
-        page = 1
-        await callback.message.answer(
-            message_texts.house_search_result_text(query_set[page - 1]),
-            reply_markup=keyboards.pagination_keyboard(1, pages_count, 'house'),
-            parse_mode="Markdown"
-        )
-        await state.update_data(
-            page=page,
-            pages_count=pages_count,
-            query_set=query_set
-        )
+    data = await state.get_data()
+
+    """Вид отображения каскадом"""
+    if data.get('view_form') == 'cascade':
+        for item in query_set:
+            album = MediaGroup()
+            photo_list = item.photo_id
+            for photo_id in photo_list:
+                if photo_id == photo_list[-1]:
+                    album.attach_photo(
+                        photo_id,
+                        caption=message_texts.house_search_result_text(
+                            item=item
+                        ),
+                        parse_mode="Markdown"
+                    )
+                else:
+                    album.attach_photo(photo_id)
+            await callback.message.answer_media_group(media=album)
+
+    """Вид отображения карусель"""
+    if data.get('view_form') == 'carousel':
+        if query_set:
+            page = 1
+            await callback.message.answer(
+                message_texts.house_search_result_text(query_set[page - 1]),
+                reply_markup=keyboards.pagination_keyboard(1, pages_count, 'house'),
+                parse_mode="Markdown"
+            )
+            await state.update_data(
+                page=page,
+                pages_count=pages_count,
+                query_set=query_set
+            )
 
 
 @dp.callback_query_handler(text=['house_prev', 'house_next'])
@@ -312,25 +330,38 @@ async def townhouses(callback: types.CallbackQuery, state: FSMContext):
         parse_mode="Markdown"
     )
 
-    """Старый вид отображения по сообщениям"""
-    # query_set = TownHouse.objects.order_by('-pub_date')
-    # for item in query_set:
-    #     await callback.message.answer(
-    #         message_texts.townhouse_search_result_text(item),
-    #         parse_mode='Markdown'
-    #     )
-    if query_set:
-        page = 1
-        await callback.message.answer(
-            message_texts.townhouse_search_result_text(query_set[page - 1]),
-            reply_markup=keyboards.pagination_keyboard(1, pages_count, 'townhouse'),
-            parse_mode="Markdown"
-        )
-        await state.update_data(
-            page=page,
-            pages_count=pages_count,
-            query_set=query_set
-        )
+    data = await state.get_data()
+
+    """Вид отображения каскадом"""
+    if data.get('view_form') == 'cascade':
+        for item in query_set:
+            album = MediaGroup()
+            photo_list = item.photo_id
+            for photo_id in photo_list:
+                if photo_id == photo_list[-1]:
+                    album.attach_photo(
+                        photo_id,
+                        caption=message_texts.townhouse_search_result_text(
+                            item=item
+                        ),
+                        parse_mode="Markdown"
+                    )
+                else:
+                    album.attach_photo(photo_id)
+            await callback.message.answer_media_group(media=album)
+    if data.get('view_form') == 'carousel':
+        if query_set:
+            page = 1
+            await callback.message.answer(
+                message_texts.townhouse_search_result_text(query_set[page - 1]),
+                reply_markup=keyboards.pagination_keyboard(1, pages_count, 'townhouse'),
+                parse_mode="Markdown"
+            )
+            await state.update_data(
+                page=page,
+                pages_count=pages_count,
+                query_set=query_set
+            )
 
 
 @dp.callback_query_handler(text=['townhouse_prev', 'townhouse_next'])
@@ -375,29 +406,41 @@ async def lands(callback: types.CallbackQuery, state: FSMContext):
         parse_mode="Markdown"
     )
 
-    """Старый вид отображения по сообщениям"""
-    # query_set = Land.objects.order_by('-pub_date')
-    # for item in query_set:
-    #     await callback.message.answer(
-    #         message_texts.lands_search_result_text(item),
-    #         parse_mode='Markdown'
-    #     )
+    data = await state.get_data()
 
-    # установка на значение страницы номер 1
-    if query_set:
-        page = 1
-        await callback.message.answer(
-            # вывод на экран первого элемента (инфы об объекте) кверисета
-            message_texts.lands_search_result_text(query_set[page - 1]),
-            reply_markup=keyboards.pagination_keyboard(1, pages_count, 'land'),
-            parse_mode="Markdown"
-        )
-        await state.update_data(
-            # запоминание состояний в FSM для передачи во вторую часть магии
-            page=page,
-            pages_count=pages_count,
-            query_set=query_set
-        )
+    """Вид отображения каскадом"""
+    if data.get('view_form') == 'cascade':
+        for item in query_set:
+            album = MediaGroup()
+            photo_list = item.photo_id
+            for photo_id in photo_list:
+                if photo_id == photo_list[-1]:
+                    album.attach_photo(
+                        photo_id,
+                        caption=message_texts.lands_search_result_text(item=item),
+                        parse_mode="Markdown"
+                    )
+                else:
+                    album.attach_photo(photo_id)
+            await callback.message.answer_media_group(media=album)
+
+    """вид отображения каруселью"""
+    if data.get('view_form') == 'carousel':
+        if query_set:
+            # установка значения номера страницы на первую
+            page = 1
+            await callback.message.answer(
+                # вывод на экран первого элемента (инфы об объекте) кверисета
+                message_texts.lands_search_result_text(query_set[page - 1]),
+                reply_markup=keyboards.pagination_keyboard(1, pages_count, 'land'),
+                parse_mode="Markdown"
+            )
+            await state.update_data(
+                # запоминание состояний в FSM для передачи во вторую часть магии
+                page=page,
+                pages_count=pages_count,
+                query_set=query_set
+            )
 
 
 @dp.callback_query_handler(text=['land_prev', 'land_next'])
@@ -464,79 +507,81 @@ async def apartment_search_result(
         parse_mode="Markdown",
     )
 
-    """Старое отображение по списком сообщениями"""
+    data = await state.get_data()
     query_set = Apartment.objects.filter(
         room_quantity=int(room_count)
     ).order_by('-pub_date')
-    for item in query_set:
 
-        album = MediaGroup()
-        # album.attach_photo(item.photo_id)
-        album.attach_photo(
-            item.photo_id,
-            caption=message_texts.apartments_search_result_text(
-                int(room_count),
-                item
-            ),
-            parse_mode="Markdown"
-        )
+    """Вид отображения каскадом"""
+    if data.get('view_form') == 'cascade':
+        for item in query_set:
+            album = MediaGroup()
+            photo_list = item.photo_id
+            for photo_id in photo_list:
+                if photo_id == photo_list[-1]:
+                    album.attach_photo(
+                        photo_id,
+                        caption=message_texts.apartments_search_result_text(
+                                room_count=room_count, item=item
+                            ),
+                        parse_mode="Markdown"
+                    )
+                else:
+                    album.attach_photo(photo_id)
+            await callback.message.answer_media_group(media=album)
 
-        await callback.message.answer_media_group(media=album)
+    if data.get('view_form') == 'carousel':
+        """Отображение каруселью"""
+        pages_count = query_set.count()
 
-    """Отображение каруселью"""
-    # query_set = Apartment.objects.filter(
-    #     room_quantity=int(room_count)
-    # ).order_by('-pub_date')
-    # pages_count = query_set.count()
-
-    # if query_set:
-    #     page = 1
-    #     await callback.message.answer(
-    #         message_texts.apartments_search_result_text(
-    #             int(room_count),
-    #             query_set[page - 1]
-    #         ),
-    #         reply_markup=keyboards.pagination_keyboard(
-    #             1, pages_count,
-    #             'apartment'
-    #         ),
-    #         parse_mode="Markdown"
-    #     )
-    #     await state.update_data(
-    #         page=page,
-    #         pages_count=pages_count,
-    #         query_set=query_set,
-    #         room_count=room_count
-    #     )
+        if query_set:
+            page = 1
+            await callback.message.answer(
+                message_texts.apartments_search_result_text(
+                    int(room_count),
+                    query_set[page - 1]
+                ),
+                reply_markup=keyboards.pagination_keyboard(
+                    1, pages_count,
+                    'apartment'
+                ),
+                parse_mode="Markdown"
+            )
+            await state.update_data(
+                page=page,
+                pages_count=pages_count,
+                query_set=query_set,
+                room_count=room_count
+            )
 
 
-# @dp.callback_query_handler(text=['apartment_prev', 'apartment_next'])
-# async def apartment_next(callback: types.CallbackQuery, state: FSMContext):
-#     """ПАГИНАЦИЯ"""
-#     try:
-#         data = await state.get_data()
-#         if callback.data == 'apartment_prev':
-#             page = data.get('page') - 1
-#         elif callback.data == 'apartment_next':
-#             page = data.get('page') + 1
+@dp.callback_query_handler(text=['apartment_prev', 'apartment_next'])
+async def apartment_next(callback: types.CallbackQuery, state: FSMContext):
+    """ПАГИНАЦИЯ"""
+    try:
+        data = await state.get_data()
+        if callback.data == 'apartment_prev':
+            page = data.get('page') - 1
+        elif callback.data == 'apartment_next':
+            page = data.get('page') + 1
 
-#         if (page > 0) and (page <= data.get('pages_count')):
+        if (page > 0) and (page <= data.get('pages_count')):
 
-#             await state.update_data(page=page)
-#             await callback.message.edit_text(
-#                 message_texts.apartments_search_result_text(
-#                     int(data.get('room_count')),
-#                     data.get('query_set')[page - 1]
-#                 ),
-#                 reply_markup=keyboards.pagination_keyboard(
-#                     page, data.get('pages_count'), 'apartment'
-#                 ),
-#                 parse_mode='Markdown'
-#             )
-#     except IndexError:
-#         pass
-#     except ValueError:
-#         pass
+            await state.update_data(page=page)
+            await callback.message.edit_text(
+                message_texts.apartments_search_result_text(
+                    int(data.get('room_count')),
+                    data.get('query_set')[page - 1]
+                ),
+                reply_markup=keyboards.pagination_keyboard(
+                    page, data.get('pages_count'), 'apartment'
+                ),
+                parse_mode='Markdown'
+            )
+    except IndexError:
+        pass
+    except ValueError:
+        pass
 
 
 #   С ЭТОГО МЕСТА ОПРОС ПО КВАРТИРЕ
@@ -573,7 +618,7 @@ async def entering_room_count(
 
 
 @dp.message_handler(state=CallbackOnStart.Q1)
-async def entering_street_name(message: types.Message, state: FSMContext):
+async def entering_street_name(message: Message, state: FSMContext):
     """Запись названия улицы, следующий вопрос """
 
     answer = message.text.title()
@@ -586,7 +631,7 @@ async def entering_street_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q2)
-async def entering_house_number(message: types.Message, state: FSMContext):
+async def entering_house_number(message: Message, state: FSMContext):
     """Запись номера дома. Следующий вопрос """
 
     answer = message.text.upper()
@@ -638,7 +683,7 @@ async def entering_floors(callback: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q5)
-async def entering_area(message: types.Message, state: FSMContext):
+async def entering_area(message: Message, state: FSMContext):
     try:
         answer = float(message.text)
         await state.update_data(area=answer)
@@ -656,7 +701,7 @@ async def entering_area(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q6)
-async def entering_price(message: types.Message, state: FSMContext):
+async def entering_price(message: Message, state: FSMContext):
     try:
         answer = int(message.text)
         await state.update_data(price=answer)
@@ -674,7 +719,7 @@ async def entering_price(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q7)
-async def entering_description(message: types.Message, state: FSMContext):
+async def entering_description(message: Message, state: FSMContext):
     """Запись состояния"""
 
     answer = message.text
@@ -740,7 +785,7 @@ async def entering_mortage(callback: types.CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q11)
-async def entering_phone_number(message: types.Message, state: FSMContext):
+async def entering_phone_number(message: Message, state: FSMContext):
     """Запись номера телефона"""
 
     if re.match(r"^[0-9]+$", message.text):
@@ -758,7 +803,7 @@ async def entering_phone_number(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q12)
-async def entering_agency_name(message: types.Message, state: FSMContext):
+async def entering_agency_name(message: Message, state: FSMContext):
     """Запись названия агентства"""
 
     answer = message.text.title()
@@ -770,7 +815,7 @@ async def entering_agency_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q13)
-async def entering_rieltor_name(message: types.Message, state: FSMContext):
+async def entering_rieltor_name(message: Message, state: FSMContext):
     answer = message.text.title()
     global flag # костыля для работы загрузки фото
     flag = False
@@ -782,45 +827,51 @@ async def entering_rieltor_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=CallbackOnStart.Q14, content_types=ContentType.PHOTO)
-async def upload_photos(message: types.Message, state: FSMContext):
+async def upload_photos(message: Message, state: FSMContext):
     """Загрузка фото магия"""
     global flag
-    # if not await state.get_data():
+    # if not await state.get_data(): раньше было, заменил на флаг
     if not flag:
-        print(1)
         await state.update_data(photo=[message.photo[-1].file_id])
         flag = True
-        await bot.send_message(message.chat.id, "Укажите название")
-        print(2)
+        await bot.send_message(
+            message.chat.id,
+            "Напишите пожелание себе на успех =)"
+        )
         await CallbackOnStart.Q15.set()
     else:
-        print(3)
         photo_list = await state.get_data()
         flag = True
         photos = photo_list.get("photo")
         photos.append(message.photo[-1].file_id)
-        print(4)
         await state.update_data(photo=photos)
 
 
 @dp.message_handler(state=CallbackOnStart.Q15)
-async def base_updating(message: types.Message, state: FSMContext):
+async def base_updating(message: Message, state: FSMContext):
 
     data = await state.get_data()
-    print(data.get('photo'))
 
-    # ЗАПИСЬ В БАЗУ
+    # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.apartment_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
         )
     else:
-        await message.answer(
-            '\n'.join(
-                message_texts.apartment_adding_result_text(data)
-            ),
-            parse_mode="Markdown"
-        )
+        album = MediaGroup()
+        photo_list = data.get('photo')
+        for photo_id in photo_list:
+            if photo_id == photo_list[-1]:
+                album.attach_photo(
+                    photo_id,
+                    caption='\n'.join(
+                        message_texts.apartment_adding_result_text(data)
+                    ),
+                    parse_mode="Markdown"
+                )
+            else:
+                album.attach_photo(photo_id)
+        await message.answer_media_group(media=album)
     await state.finish()
 
 
@@ -841,7 +892,7 @@ async def add_room(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(state=RoomCallbackStates.R1)
 async def enetering_rooms_street_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     """Запись названия улицы комнаты"""
 
@@ -854,7 +905,7 @@ async def enetering_rooms_street_name(
 
 @dp.message_handler(state=RoomCallbackStates.R2)
 async def enetering_rooms_house_number(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     """Запись номера дома"""
 
@@ -905,7 +956,7 @@ async def entering_room_floors(
 
 @dp.message_handler(state=RoomCallbackStates.R5)
 async def enetering_rooms_area(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     try:
         answer = float(message.text)
@@ -924,7 +975,7 @@ async def enetering_rooms_area(
 
 
 @dp.message_handler(state=RoomCallbackStates.R6)
-async def entering_room_price(message: types.Message, state: FSMContext):
+async def entering_room_price(message: Message, state: FSMContext):
     try:
         answer = int(message.text)
         await state.update_data(room_price=answer)
@@ -942,7 +993,7 @@ async def entering_room_price(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=RoomCallbackStates.R7)
-async def entering_room_description(message: types.Message, state: FSMContext):
+async def entering_room_description(message: Message, state: FSMContext):
 
     answer = message.text
     await state.update_data(room_description=answer)
@@ -1006,7 +1057,7 @@ async def entering_room_mortage(callback: types.CallbackQuery, state: FSMContext
 
 
 @dp.message_handler(state=RoomCallbackStates.R11)
-async def entering_room_phone_number(message: types.Message, state: FSMContext):
+async def entering_room_phone_number(message: Message, state: FSMContext):
 
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(room_phone_number=message.text)
@@ -1023,7 +1074,7 @@ async def entering_room_phone_number(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=RoomCallbackStates.R12)
-async def entering_room_agency_name(message: types.Message, state: FSMContext):
+async def entering_room_agency_name(message: Message, state: FSMContext):
 
     answer = message.text.title()
     await state.update_data(room_agency_name=answer)
@@ -1034,24 +1085,63 @@ async def entering_room_agency_name(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=RoomCallbackStates.R13)
-async def entering_room_rialtor_name(message: types.Message, state: FSMContext):
+async def entering_room_rialtor_name(message: Message, state: FSMContext):
 
     answer = message.text.title()
+    global flag
+    flag = False
     await state.update_data(room_rieltor_name=answer)
+    await message.answer(
+        '🔻 Загрузите до 10 фот квартиры (значок 📎)'
+    )
+    await RoomCallbackStates.R14.set()
+
+
+@dp.message_handler(state=RoomCallbackStates.R14, content_types=ContentType.PHOTO)
+async def room_upload_photos(message: Message, state: FSMContext):
+    """Загрузка фото магия"""
+    global flag
+    if not flag:
+        await state.update_data(photo=[message.photo[-1].file_id])
+        flag = True
+        await bot.send_message(
+            message.chat.id,
+            "Напишите пожелание себе на успех =)"
+        )
+        await RoomCallbackStates.R15.set()
+    else:
+        photo_list = await state.get_data()
+        flag = True
+        photos = photo_list.get("photo")
+        photos.append(message.photo[-1].file_id)
+        await state.update_data(photo=photos)
+
+
+@dp.message_handler(state=RoomCallbackStates.R15)
+async def room_base_updating(message: Message, state: FSMContext):
+
     data = await state.get_data()
 
-    # ЗАПИСЬ В БАЗУ
+    # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.room_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
         )
     else:
-        await message.answer(
-            '\n'.join(
-                message_texts.room_adding_result_text(data)
-            ),
-            parse_mode="Markdown"
-        )
+        album = MediaGroup()
+        photo_list = data.get('photo')
+        for photo_id in photo_list:
+            if photo_id == photo_list[-1]:
+                album.attach_photo(
+                    photo_id,
+                    caption='\n'.join(
+                        message_texts.room_adding_result_text(data)
+                    ),
+                    parse_mode="Markdown"
+                )
+            else:
+                album.attach_photo(photo_id)
+        await message.answer_media_group(media=album)
     await state.finish()
 
 
@@ -1097,7 +1187,7 @@ async def entering_house_street_name(
 
 
 @dp.message_handler(state=HouseCallbackStates.H2)
-async def entering_house_purpose(message: types.Message, state: FSMContext):
+async def entering_house_purpose(message: Message, state: FSMContext):
     """Ответ на написание названия улицы"""
 
     answer = message.text.title()
@@ -1284,7 +1374,7 @@ async def entering_house_area(
 
 
 @dp.message_handler(state=HouseCallbackStates.H12)
-async def entering_house_land_area(message: types.Message, state: FSMContext):
+async def entering_house_land_area(message: Message, state: FSMContext):
     try:
         answer = float(message.text)
         await state.update_data(house_area=answer)
@@ -1304,7 +1394,7 @@ async def entering_house_land_area(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=HouseCallbackStates.H13)
-async def entering_house_price(message: types.Message, state: FSMContext):
+async def entering_house_price(message: Message, state: FSMContext):
     try:
         answer = float(message.text)
         await state.update_data(house_land_area=answer)
@@ -1322,7 +1412,7 @@ async def entering_house_price(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=HouseCallbackStates.H14)
-async def entering_house_description(message: types.Message, state: FSMContext):
+async def entering_house_description(message: Message, state: FSMContext):
     try:
         answer = int(message.text)
         await state.update_data(house_price=answer)
@@ -1341,7 +1431,7 @@ async def entering_house_description(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=HouseCallbackStates.H15)
 async def entering_house_encumbrance(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     answer = message.text
     await state.update_data(house_description=answer)
@@ -1407,7 +1497,7 @@ async def entering_house_phone_number(
 
 @dp.message_handler(state=HouseCallbackStates.H19)
 async def entering_house_agency_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(house_phone_number=message.text)
@@ -1425,7 +1515,7 @@ async def entering_house_agency_name(
 
 @dp.message_handler(state=HouseCallbackStates.H20)
 async def entering_house_rieltor_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     answer = message.text.title()
     await state.update_data(house_agency_name=answer)
@@ -1436,23 +1526,62 @@ async def entering_house_rieltor_name(
 
 
 @dp.message_handler(state=HouseCallbackStates.H21)
-async def house_result_text(message: types.Message, state: FSMContext):
+async def house_entering_rieltor_name(message: Message, state: FSMContext):
     answer = message.text.title()
+    global flag
+    flag = False
     await state.update_data(house_rieltor_name=answer)
+    await message.answer(
+        '🔻 Загрузите до 10 фото дома (значок 📎)'
+    )
+    await HouseCallbackStates.H22.set()
+
+
+@dp.message_handler(state=HouseCallbackStates.H22, content_types=ContentType.PHOTO)
+async def house_upload_photos(message: Message, state: FSMContext):
+    """Загрузка фото магия"""
+    global flag
+    if not flag:
+        await state.update_data(photo=[message.photo[-1].file_id])
+        flag = True
+        await bot.send_message(
+            message.chat.id,
+            "Напишите пожелание себе на успех =)"
+        )
+        await HouseCallbackStates.H23.set()
+    else:
+        photo_list = await state.get_data()
+        flag = True
+        photos = photo_list.get("photo")
+        photos.append(message.photo[-1].file_id)
+        await state.update_data(photo=photos)
+
+
+@dp.message_handler(state=HouseCallbackStates.H23)
+async def house_base_updating(message: Message, state: FSMContext):
+
     data = await state.get_data()
 
-    # запись в базу
+    # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.house_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
         )
     else:
-        await message.answer(
-            '\n'.join(
-                message_texts.house_adding_result_text(data)
-            ),
-            parse_mode="Markdown"
-        )
+        album = MediaGroup()
+        photo_list = data.get('photo')
+        for photo_id in photo_list:
+            if photo_id == photo_list[-1]:
+                album.attach_photo(
+                    photo_id,
+                    caption='\n'.join(
+                        message_texts.house_adding_result_text(data)
+                    ),
+                    parse_mode="Markdown"
+                )
+            else:
+                album.attach_photo(photo_id)
+        await message.answer_media_group(media=album)
     await state.finish()
 
 
@@ -1498,7 +1627,7 @@ async def entering_townhouse_street_name(
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T2)
-async def entering_townhouse_purpose(message: types.Message, state: FSMContext):
+async def entering_townhouse_purpose(message: Message, state: FSMContext):
     """Ответ на написание названия улицы"""
 
     answer = message.text.title()
@@ -1686,7 +1815,7 @@ async def entering_townhouse_area(
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T12)
-async def entering_townhouse_land_area(message: types.Message, state: FSMContext):
+async def entering_townhouse_land_area(message: Message, state: FSMContext):
     try:
         answer = float(message.text)
         await state.update_data(townhouse_area=answer)
@@ -1706,7 +1835,7 @@ async def entering_townhouse_land_area(message: types.Message, state: FSMContext
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T13)
-async def entering_townhouse_price(message: types.Message, state: FSMContext):
+async def entering_townhouse_price(message: Message, state: FSMContext):
     try:
         answer = float(message.text)
         await state.update_data(townhouse_land_area=answer)
@@ -1724,7 +1853,7 @@ async def entering_townhouse_price(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T14)
-async def entering_townhouse_description(message: types.Message, state: FSMContext):
+async def entering_townhouse_description(message: Message, state: FSMContext):
     try:
         answer = int(message.text)
         await state.update_data(townhouse_price=answer)
@@ -1743,7 +1872,7 @@ async def entering_townhouse_description(message: types.Message, state: FSMConte
 
 @dp.message_handler(state=TownHouseCallbackStates.T15)
 async def entering_townhouse_encumbrance(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     answer = message.text
     await state.update_data(townhouse_description=answer)
@@ -1809,7 +1938,7 @@ async def entering_townhouse_phone_number(
 
 @dp.message_handler(state=TownHouseCallbackStates.T19)
 async def entering_townhouse_agency_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(townhouse_phone_number=message.text)
@@ -1827,7 +1956,7 @@ async def entering_townhouse_agency_name(
 
 @dp.message_handler(state=TownHouseCallbackStates.T20)
 async def entering_townhouse_rieltor_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     answer = message.text.title()
     await state.update_data(townhouse_agency_name=answer)
@@ -1838,23 +1967,62 @@ async def entering_townhouse_rieltor_name(
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T21)
-async def townhouse_result_text(message: types.Message, state: FSMContext):
+async def entering_townhouse_rieltor_name(message: Message, state: FSMContext):
     answer = message.text.title()
+    global flag
+    flag = False
     await state.update_data(townhouse_rieltor_name=answer)
+    await message.answer(
+        '🔻 Загрузите до 10 фото таунхауса (значок 📎)'
+    )
+    await TownHouseCallbackStates.T22.set()
+
+
+@dp.message_handler(state=TownHouseCallbackStates.T22, content_types=ContentType.PHOTO)
+async def townhouse_upload_photos(message: Message, state: FSMContext):
+    """Загрузка фото магия"""
+    global flag
+    if not flag:
+        await state.update_data(photo=[message.photo[-1].file_id])
+        flag = True
+        await bot.send_message(
+            message.chat.id,
+            "Напишите пожелание себе на успех =)"
+        )
+        await TownHouseCallbackStates.T23.set()
+    else:
+        photo_list = await state.get_data()
+        flag = True
+        photos = photo_list.get("photo")
+        photos.append(message.photo[-1].file_id)
+        await state.update_data(photo=photos)
+
+
+@dp.message_handler(state=TownHouseCallbackStates.T23)
+async def townhouse_base_updating(message: Message, state: FSMContext):
+
     data = await state.get_data()
 
-    # запись в базу
+    # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.townhouse_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
         )
     else:
-        await message.answer(
-            '\n'.join(
-                message_texts.townhouse_adding_result_text(data)
-            ),
-            parse_mode="Markdown"
-        )
+        album = MediaGroup()
+        photo_list = data.get('photo')
+        for photo_id in photo_list:
+            if photo_id == photo_list[-1]:
+                album.attach_photo(
+                    photo_id,
+                    caption='\n'.join(
+                        message_texts.townhouse_adding_result_text(data)
+                    ),
+                    parse_mode="Markdown"
+                )
+            else:
+                album.attach_photo(photo_id)
+        await message.answer_media_group(media=album)
     await state.finish()
 
 
@@ -1898,7 +2066,7 @@ async def entering_land_street_name(
 
 
 @dp.message_handler(state=LandCallbackStates.L2)
-async def entering_land_number(message: types.Message, state: FSMContext):
+async def entering_land_number(message: Message, state: FSMContext):
 
     answer = message.text.title()
     await state.update_data(land_street_name=answer)
@@ -1909,7 +2077,7 @@ async def entering_land_number(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=LandCallbackStates.L3)
-async def entering_land_purpose(message: types.Message, state: FSMContext):
+async def entering_land_purpose(message: Message, state: FSMContext):
 
     answer = message.text.upper()
     await state.update_data(land_number_name=answer)
@@ -2058,7 +2226,7 @@ async def entering_land_area(
 
 
 @dp.message_handler(state=LandCallbackStates.L11)
-async def entering_land_price(message: types.Message, state: FSMContext):
+async def entering_land_price(message: Message, state: FSMContext):
     try:
         answer = float(message.text)
         await state.update_data(land_area=answer)
@@ -2075,7 +2243,7 @@ async def entering_land_price(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=LandCallbackStates.L12)
-async def entering_land_description(message: types.Message, state: FSMContext):
+async def entering_land_description(message: Message, state: FSMContext):
     try:
         answer = int(message.text)
         await state.update_data(land_price=answer)
@@ -2094,7 +2262,7 @@ async def entering_land_description(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=LandCallbackStates.L13)
 async def entering_land_encumbrance(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     answer = message.text
     await state.update_data(land_description=answer)
@@ -2160,7 +2328,7 @@ async def entering_land_phone_number(
 
 @dp.message_handler(state=LandCallbackStates.L17)
 async def entering_land_agency_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     if re.match(r"^[0-9]+$", message.text):
         await state.update_data(land_phone_number=message.text)
@@ -2178,7 +2346,7 @@ async def entering_land_agency_name(
 
 @dp.message_handler(state=LandCallbackStates.L18)
 async def entering_land_rieltor_name(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     answer = message.text.title()
     await state.update_data(land_agency_name=answer)
@@ -2189,28 +2357,69 @@ async def entering_land_rieltor_name(
 
 
 @dp.message_handler(state=LandCallbackStates.L19)
-async def land_result_text(message: types.Message, state: FSMContext):
+async def entering_land_rieltor_name(
+    message: Message, state: FSMContext
+):
     answer = message.text.title()
+    global flag
+    flag = False
     await state.update_data(land_rieltor_name=answer)
+    await message.answer(
+        '🔻 Загрузите до 10 фото участка (значок 📎)'
+    )
+    await LandCallbackStates.L20.set()
+
+
+@dp.message_handler(state=LandCallbackStates.L20, content_types=ContentType.PHOTO)
+async def land_upload_photos(message: Message, state: FSMContext):
+    """Загрузка фото магия"""
+    global flag
+    if not flag:
+        await state.update_data(photo=[message.photo[-1].file_id])
+        flag = True
+        await bot.send_message(
+            message.chat.id,
+            "Напишите пожелание себе на успех =)"
+        )
+        await LandCallbackStates.L21.set()
+    else:
+        photo_list = await state.get_data()
+        flag = True
+        photos = photo_list.get("photo")
+        photos.append(message.photo[-1].file_id)
+        await state.update_data(photo=photos)
+
+
+@dp.message_handler(state=LandCallbackStates.L21)
+async def land_base_updating(message: Message, state: FSMContext):
+
     data = await state.get_data()
 
-    # запись в базу
+    # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.land_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
         )
     else:
-        await message.answer(
-            '\n'.join(
-                message_texts.land_adding_result_text(data)
-            ),
-            parse_mode="Markdown"
-        )
+        album = MediaGroup()
+        photo_list = data.get('photo')
+        for photo_id in photo_list:
+            if photo_id == photo_list[-1]:
+                album.attach_photo(
+                    photo_id,
+                    caption='\n'.join(
+                        message_texts.land_adding_result_text(data)
+                    ),
+                    parse_mode="Markdown"
+                )
+            else:
+                album.attach_photo(photo_id)
+        await message.answer_media_group(media=album)
     await state.finish()
 
 
 @dp.message_handler(commands=['myobjects'])
-async def my_objects(message: types.Message):
+async def my_objects(message: Message):
     """Ответ на кнопку просмотра объектов пользователя."""
 
     await message.answer(
@@ -2221,7 +2430,7 @@ async def my_objects(message: types.Message):
 
 @dp.message_handler(state=MyObjectsCallbackStates.MO1)
 async def entering_phone_number_for_searching(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     apartment_queryset = Apartment.objects.filter(phone_number=message.text)
     room_queryset = Room.objects.filter(phone_number=message.text)
@@ -2287,7 +2496,7 @@ async def entering_phone_number_for_searching(
 
 
 @dp.message_handler(commands=['editprice'])
-async def edit_price(message: types.Message):
+async def edit_price(message: Message):
     """Ответ на кнопку редактирования цены."""
 
     await message.answer(
@@ -2298,7 +2507,7 @@ async def edit_price(message: types.Message):
 
 @dp.message_handler(state=PriceEditCallbackStates.EP1)
 async def object_choice_for_editing(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     cond1 = Apartment.objects.filter(phone_number=message.text).exists()
     cond2 = Room.objects.filter(phone_number=message.text).exists()
@@ -2345,7 +2554,7 @@ async def entering_new_price(
 
 @dp.message_handler(state=PriceEditCallbackStates.EP3)
 async def price_updating_process(
-    message: types.Message, state: FSMContext
+    message: Message, state: FSMContext
 ):
     try:
         data = await state.get_data()

@@ -331,6 +331,14 @@ class keyboards():
         )
         return keyboard
 
+    def carousel_or_cascade_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        keyboard.row(
+            InlineKeyboardButton(text='Каскадная с фото', callback_data='cascade'),
+            InlineKeyboardButton(text='Карусель без фото', callback_data='carousel')
+        )
+        return keyboard
+
 
 class Output():
     def false_or_true(item: bool) -> str:
