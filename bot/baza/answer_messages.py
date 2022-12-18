@@ -26,7 +26,8 @@ class message_texts():
                 '',
                 '*Версия 1.2:*\n'
                 + '- Исправлен баг одновременной работы нескольких пользователей;\n'
-                + '- Просмотр объектов в "Карусели";\n'
+                + '- Появилась возможность добавить до 6 фото к объекту;\n'
+                + '- Два варианта просмотра объектов - в "Карусели" и в каскадном виде;\n'
                   ,
                 '*Версия 1.1:*\n'
                 + '- Возможность добавить в базу квартиры, комнаты, дома, таунхаусы и участки;\n'
@@ -92,11 +93,14 @@ class message_texts():
         )
         return text
 
-    def room_search_result_text(item: Room) -> str:
+    def room_search_result_text(item: Room, view_form: str) -> str:
         """Шаблон тексата выдачи поиска по комнатам"""
-
+        if view_form == 'carousel':
+            marker = '🔸'
+        if view_form == 'cascade':
+            marker = '⬆'
         text = (
-            f'🔸 _Комната {item.street_name} д.{item.number_of_house}_'
+            f'{marker} _Комната {item.street_name} д.{item.number_of_house}_'
             + f'\n*Этаж:* {item.floor}/{item.number_of_floors}'
             + f'\n*Площадь комнаты:* {item.area} кв.м.'
             + f'\n*Описание:* {item.description} '
@@ -111,11 +115,14 @@ class message_texts():
         )
         return text
 
-    def house_search_result_text(item: House) -> str:
+    def house_search_result_text(item: House, view_form: str) -> str:
         """Шаблон тексата выдачи поиска по домам """
-
+        if view_form == 'carousel':
+            marker = '🔸'
+        if view_form == 'cascade':
+            marker = '⬆'
         text = (
-            f'🔸 _Дом {item.microregion}, {item.street_name}_'
+            f'{marker} _Дом {item.microregion}, {item.street_name}_'
             + f'\n*Площадь дома:* {item.area} кв.м.'
             + f'\n*Площадь участка:* {item.area_of_land} сот.'
             + f'\n*Назначение участка:* {item.purpose}'
@@ -139,11 +146,14 @@ class message_texts():
         )
         return text
 
-    def townhouse_search_result_text(item: TownHouse) -> str:
+    def townhouse_search_result_text(item: TownHouse, view_form: str) -> str:
         """Шаблон текста выдачи поиска по таунхаусам"""
-
+        if view_form == 'carousel':
+            marker = '🔸'
+        if view_form == 'cascade':
+            marker = '⬆'
         text = (
-            f'🔸 _Таунхаус {item.microregion}, {item.street_name}_'
+            f'{marker} _Таунхаус {item.microregion}, {item.street_name}_'
             + f'\n*Площадь дома:* {item.area} кв.м.'
             + f'\n*Площадь участка:* {item.area_of_land} сот.'
             + f'\n*Назначение участка:* {item.purpose}'
@@ -167,11 +177,14 @@ class message_texts():
         )
         return text
 
-    def lands_search_result_text(item: Land) -> str:
+    def lands_search_result_text(item: Land, view_form: str) -> str:
         """Шаблон текста выдачи поиска по участкам"""
-
+        if view_form == 'carousel':
+            marker = '🔸'
+        if view_form == 'cascade':
+            marker = '⬆'
         text = (
-            f'🔸 _Участок {item.microregion}, {item.street_name} уч.{item.number_of_land} _'
+            f'{marker} _Участок {item.microregion}, {item.street_name} уч.{item.number_of_land} _'
             + f'\n*Площадь участка:* {item.area_of_land} сот.'
             + f'\n*Назначение участка:* {item.purpose}'
             + f'\n*Степень газификации:* {item.gaz}'
@@ -190,11 +203,14 @@ class message_texts():
         )
         return text
 
-    def apartments_search_result_text(room_count: int, item: Apartment) -> str:
+    def apartments_search_result_text(room_count: int, item: Apartment, view_form: str) -> str:
         """Шаблон текста выдачи поиска по квартирам"""
-
+        if view_form == 'carousel':
+            marker = '🔸'
+        if view_form == 'cascade':
+            marker = '⬆'
         text = (
-            f'⬆ _{room_count}к.кв. {item.street_name} д.{item.number_of_house}_'
+            f'{marker} _{room_count}к.кв. {item.street_name} д.{item.number_of_house}_'
             + f'\n*Этаж:* {item.floor}/{item.number_of_floors} '
             + f'\n*Площадь квартиры:* {item.area} кв.м.'
             + f'\n*Описание:* {item.description}'
@@ -402,7 +418,7 @@ class message_texts():
                 + 'засыпан глиной, о чем свидетельствуют низко расположенные '
                 + 'окна первого этажа. Оно располагается в Касёво на пересечении '
                 + 'улиц Трактоваяой и Колхозной и располагается как раз вблизи '
-                + 'реки Маринка. Если встать на мост это реки, взглянуть вниз '
+                + 'реки Маринка. Если встать на мост этой реки, взглянуть вниз '
                 + 'то можно отметить для себя непропорциональность низины реки '
                 + 'и её русла. Но речка шириной в 4 метра не могла себе создать '
                 + 'низменность шириной более 110 метров! Такая низина вполне '

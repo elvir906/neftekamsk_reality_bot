@@ -202,7 +202,7 @@ async def rooms(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.room_search_result_text(
-                            item=item
+                            item=item, view_form='cascade'
                         ),
                         parse_mode='Markdown'
                     )
@@ -216,7 +216,7 @@ async def rooms(callback: CallbackQuery, state: FSMContext):
             page = 1
             await callback.message.answer(
                 message_texts.room_search_result_text(
-                    item=query_set[page - 1]
+                    item=query_set[page - 1], view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -284,7 +284,7 @@ async def houses(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.house_search_result_text(
-                            item=item
+                            item=item, view_form='cascade'
                         ),
                         parse_mode='Markdown'
                     )
@@ -298,7 +298,7 @@ async def houses(callback: CallbackQuery, state: FSMContext):
             page = 1
             await callback.message.answer(
                 message_texts.house_search_result_text(
-                    item=query_set[page - 1]
+                    item=query_set[page - 1], view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -367,7 +367,7 @@ async def townhouses(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.townhouse_search_result_text(
-                            item=item
+                            item=item, view_form='cascade'
                         ),
                         parse_mode='Markdown'
                     )
@@ -381,7 +381,7 @@ async def townhouses(callback: CallbackQuery, state: FSMContext):
             page = 1
             await callback.message.answer(
                 message_texts.townhouse_search_result_text(
-                    item=query_set[page - 1]
+                    item=query_set[page - 1], view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -449,7 +449,7 @@ async def lands(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.lands_search_result_text(
-                            item=item
+                            item=item, view_form='cascade'
                         ),
                         parse_mode='Markdown'
                     )
@@ -465,7 +465,8 @@ async def lands(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer(
                 # вывод на экран первого элемента (инфы об объекте) кверисета
                 message_texts.lands_search_result_text(
-                    item=query_set[page - 1]
+                    item=query_set[page - 1],
+                    view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -565,7 +566,8 @@ async def apartment_search_result(
                         photo_id,
                         caption=message_texts.apartments_search_result_text(
                                 room_count=room_count,
-                                item=item
+                                item=item,
+                                view_form='cascade'
                             ),
                         parse_mode='Markdown'
                     )
@@ -582,7 +584,8 @@ async def apartment_search_result(
             await callback.message.answer(
                 message_texts.apartments_search_result_text(
                     int(room_count),
-                    query_set[page - 1]
+                    query_set[page - 1],
+                    view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     1, pages_count,
