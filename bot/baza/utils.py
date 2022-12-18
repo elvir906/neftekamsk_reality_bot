@@ -1,7 +1,6 @@
 import sys
 
-from aiogram.types import (ContentType, InlineKeyboardMarkup, InputFile,
-                           MediaGroup, Message)
+from aiogram.types import InlineKeyboardMarkup
 from aiogram.types.inline_keyboard import InlineKeyboardButton
 from baza.models import Apartment, House, Land, Room, TownHouse
 
@@ -322,12 +321,12 @@ class keyboards():
             )
         return keyboard
 
-    def pagination_keyboard(p, pp, cat):
+    def pagination_keyboard(page, pages, category):
         keyboard = InlineKeyboardMarkup()
         keyboard.row(
-            InlineKeyboardButton(text='⬅', callback_data=f'{cat}_prev'),
-            InlineKeyboardButton(text=f'{p} из {pp}', callback_data='1'),
-            InlineKeyboardButton(text='➡', callback_data=f'{cat}_next')
+            InlineKeyboardButton(text='⬅', callback_data=f'{category}_prev'),
+            InlineKeyboardButton(text=f'{page} из {pages}', callback_data='1'),
+            InlineKeyboardButton(text='➡', callback_data=f'{category}_next')
         )
         return keyboard
 
