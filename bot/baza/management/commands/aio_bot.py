@@ -246,7 +246,8 @@ async def rooms_next(callback: CallbackQuery, state: FSMContext):
             await state.update_data(page=page)
             await callback.message.edit_text(
                 message_texts.room_search_result_text(
-                    item=data.get('query_set')[page - 1]
+                    item=data.get('query_set')[page - 1],
+                    view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -329,7 +330,8 @@ async def houses_next(callback: CallbackQuery, state: FSMContext):
             await state.update_data(page=page)
             await callback.message.edit_text(
                 message_texts.house_search_result_text(
-                    item=data.get('query_set')[page - 1]
+                    item=data.get('query_set')[page - 1],
+                    view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -411,7 +413,8 @@ async def townhouses_next(callback: CallbackQuery, state: FSMContext):
             await state.update_data(page=page)
             await callback.message.edit_text(
                 message_texts.townhouse_search_result_text(
-                    data.get('query_set')[page - 1]
+                    data.get('query_set')[page - 1],
+                    view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page, data.get('pages_count'), 'townhouse'
@@ -506,7 +509,8 @@ async def lands_next(callback: CallbackQuery, state: FSMContext):
 
                 # вывод на экран через кастомный метод
                 message_texts.lands_search_result_text(
-                    item=data.get('query_set')[page - 1]
+                    item=data.get('query_set')[page - 1],
+                    view_form='carousel'
                 ),
                 # кейборд из кастомного метода
                 reply_markup=keyboards.pagination_keyboard(
@@ -617,7 +621,8 @@ async def apartment_next(callback: CallbackQuery, state: FSMContext):
             await callback.message.edit_text(
                 message_texts.apartments_search_result_text(
                     int(data.get('room_count')),
-                    data.get('query_set')[page - 1]
+                    data.get('query_set')[page - 1],
+                    view_form='carousel'
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
