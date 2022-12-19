@@ -71,17 +71,25 @@ class message_texts():
 
         'start': '👋 Привет! Рад приветствовать тебя! Я храню в своей базе актуальные '
                               + 'объекты и помогаю риелторам города Нефтекамск сработаться.\n\n'
-                              + '🔻 Начните работу с нажатия кнопки "Меню" (синяя с тремя полосками)'
-
+                              + '🔻 Начните работу с нажатия кнопки "Меню" (синяя с тремя полосками)',
     }
+
+    def character_limit(text_len: int) -> str:
+        text = (
+            f'🔻 Текст описания состоит из {text_len} знаков и тем самым превышает ограничение в 200 знаков. '
+            + 'Попробуйте укоротить описание, оставив только суть - '
+            + 'состояние.'
+        )
+        return text
 
     def entering_description_text(category: str) -> str:
         text = (
             f'🔻 Добавьте небольшое описание {category}.\n\nПожалуйста, '
             + ' руководствуйтесь принципом "Краткость - сестра таланта" '
-            + ' и не дублируйте '
+            + ' не превышайте ограничение в 900 знаков и не дублируйте '
             + 'в описании информацию о квартире, такие как этаж, цена и др. '
-            + '\n\nТолько кратко, самую суть - состояние.'
+            + '\n\nТолько кратко, самую суть - состояние. И если надо,'
+            + ' кол-во c/у / комн. и пр. инфу в мс'
         )
         return text
 
@@ -93,18 +101,14 @@ class message_texts():
         )
         return text
 
-    def room_search_result_text(item: Room, view_form: str) -> str:
+    def room_search_result_text(item: Room) -> str:
         """Шаблон тексата выдачи поиска по комнатам"""
-        if view_form == 'carousel':
-            marker = '🔸'
-        if view_form == 'cascade':
-            marker = '⬆'
         text = (
-            f'{marker} _Комната {item.street_name} д.{item.number_of_house}_'
+            f'✅ _Комната {item.street_name} д.{item.number_of_house}_'
             + f'\n*Этаж:* {item.floor}/{item.number_of_floors}'
-            + f'\n*Площадь комнаты:* {item.area} кв.м.'
-            + f'\n*Описание:* {item.description} '
-            + f'\n*Обременение:* {Output.false_or_true(item.encumbrance)} '
+            + f'\n*Площадь квартиры:* {item.area} кв.м.'
+            + f'\n*Описание:* {item.description}'
+            + f'\n*Обременение:* {Output.false_or_true(item.encumbrance)}'
             + f'\n*Дети в собственности:* {Output.false_or_true(item.children)}'
             + f'\n*Возможность приобрести в ипотеку:* {Output.false_or_true(item.mortage)}'
             + f'\n*Цена:* {int(item.price)} ₽'
@@ -115,14 +119,11 @@ class message_texts():
         )
         return text
 
-    def house_search_result_text(item: House, view_form: str) -> str:
+    def house_search_result_text(item: House) -> str:
         """Шаблон тексата выдачи поиска по домам """
-        if view_form == 'carousel':
-            marker = '🔸'
-        if view_form == 'cascade':
-            marker = '⬆'
+
         text = (
-            f'{marker} _Дом {item.microregion}, {item.street_name}_'
+            f'✅ _Дом {item.microregion}, {item.street_name}_'
             + f'\n*Площадь дома:* {item.area} кв.м.'
             + f'\n*Площадь участка:* {item.area_of_land} сот.'
             + f'\n*Назначение участка:* {item.purpose}'
@@ -146,14 +147,11 @@ class message_texts():
         )
         return text
 
-    def townhouse_search_result_text(item: TownHouse, view_form: str) -> str:
+    def townhouse_search_result_text(item: TownHouse) -> str:
         """Шаблон текста выдачи поиска по таунхаусам"""
-        if view_form == 'carousel':
-            marker = '🔸'
-        if view_form == 'cascade':
-            marker = '⬆'
+
         text = (
-            f'{marker} _Таунхаус {item.microregion}, {item.street_name}_'
+            f'✅ _Таунхаус {item.microregion}, {item.street_name}_'
             + f'\n*Площадь дома:* {item.area} кв.м.'
             + f'\n*Площадь участка:* {item.area_of_land} сот.'
             + f'\n*Назначение участка:* {item.purpose}'
@@ -177,14 +175,11 @@ class message_texts():
         )
         return text
 
-    def lands_search_result_text(item: Land, view_form: str) -> str:
+    def lands_search_result_text(item: Land) -> str:
         """Шаблон текста выдачи поиска по участкам"""
-        if view_form == 'carousel':
-            marker = '🔸'
-        if view_form == 'cascade':
-            marker = '⬆'
+
         text = (
-            f'{marker} _Участок {item.microregion}, {item.street_name} уч.{item.number_of_land} _'
+            f'✅ _Участок {item.microregion}, {item.street_name} уч.{item.number_of_land} _'
             + f'\n*Площадь участка:* {item.area_of_land} сот.'
             + f'\n*Назначение участка:* {item.purpose}'
             + f'\n*Степень газификации:* {item.gaz}'
@@ -203,15 +198,12 @@ class message_texts():
         )
         return text
 
-    def apartments_search_result_text(room_count: int, item: Apartment, view_form: str) -> str:
+    def apartments_search_result_text(room_count: int, item: Apartment) -> str:
         """Шаблон текста выдачи поиска по квартирам"""
-        if view_form == 'carousel':
-            marker = '🔸'
-        if view_form == 'cascade':
-            marker = '⬆'
+
         text = (
-            f'{marker} _{room_count}к.кв. {item.street_name} д.{item.number_of_house}_'
-            + f'\n*Этаж:* {item.floor}/{item.number_of_floors} '
+            f'✅ _{room_count}к.кв. {item.street_name} д.{item.number_of_house}_'
+            + f'\n*Этаж:* {item.floor}/{item.number_of_floors}'
             + f'\n*Площадь квартиры:* {item.area} кв.м.'
             + f'\n*Описание:* {item.description}'
             + f'\n*Обременение:* {Output.false_or_true(item.encumbrance)}'

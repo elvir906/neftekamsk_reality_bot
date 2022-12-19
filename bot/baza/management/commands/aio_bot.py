@@ -3,6 +3,7 @@ import os
 import re
 
 import django
+import asyncio
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -201,9 +202,7 @@ async def rooms(callback: CallbackQuery, state: FSMContext):
                 if photo_id == photo_list[-1]:
                     album.attach_photo(
                         photo_id,
-                        caption=message_texts.room_search_result_text(
-                            item=item, view_form='cascade'
-                        ),
+                        caption=message_texts.room_search_result_text(item=item),
                         parse_mode='Markdown'
                     )
                 else:
@@ -216,7 +215,7 @@ async def rooms(callback: CallbackQuery, state: FSMContext):
             page = 1
             await callback.message.answer(
                 message_texts.room_search_result_text(
-                    item=query_set[page - 1], view_form='carousel'
+                    item=query_set[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -246,8 +245,7 @@ async def rooms_next(callback: CallbackQuery, state: FSMContext):
             await state.update_data(page=page)
             await callback.message.edit_text(
                 message_texts.room_search_result_text(
-                    item=data.get('query_set')[page - 1],
-                    view_form='carousel'
+                    item=data.get('query_set')[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -285,7 +283,7 @@ async def houses(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.house_search_result_text(
-                            item=item, view_form='cascade'
+                            item=item
                         ),
                         parse_mode='Markdown'
                     )
@@ -299,7 +297,7 @@ async def houses(callback: CallbackQuery, state: FSMContext):
             page = 1
             await callback.message.answer(
                 message_texts.house_search_result_text(
-                    item=query_set[page - 1], view_form='carousel'
+                    item=query_set[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -330,8 +328,7 @@ async def houses_next(callback: CallbackQuery, state: FSMContext):
             await state.update_data(page=page)
             await callback.message.edit_text(
                 message_texts.house_search_result_text(
-                    item=data.get('query_set')[page - 1],
-                    view_form='carousel'
+                    item=data.get('query_set')[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -369,7 +366,7 @@ async def townhouses(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.townhouse_search_result_text(
-                            item=item, view_form='cascade'
+                            item=item
                         ),
                         parse_mode='Markdown'
                     )
@@ -383,7 +380,7 @@ async def townhouses(callback: CallbackQuery, state: FSMContext):
             page = 1
             await callback.message.answer(
                 message_texts.townhouse_search_result_text(
-                    item=query_set[page - 1], view_form='carousel'
+                    item=query_set[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -413,8 +410,7 @@ async def townhouses_next(callback: CallbackQuery, state: FSMContext):
             await state.update_data(page=page)
             await callback.message.edit_text(
                 message_texts.townhouse_search_result_text(
-                    data.get('query_set')[page - 1],
-                    view_form='carousel'
+                    data.get('query_set')[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page, data.get('pages_count'), 'townhouse'
@@ -452,7 +448,7 @@ async def lands(callback: CallbackQuery, state: FSMContext):
                     album.attach_photo(
                         photo_id,
                         caption=message_texts.lands_search_result_text(
-                            item=item, view_form='cascade'
+                            item=item
                         ),
                         parse_mode='Markdown'
                     )
@@ -468,8 +464,7 @@ async def lands(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer(
                 # вывод на экран первого элемента (инфы об объекте) кверисета
                 message_texts.lands_search_result_text(
-                    item=query_set[page - 1],
-                    view_form='carousel'
+                    item=query_set[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -509,8 +504,7 @@ async def lands_next(callback: CallbackQuery, state: FSMContext):
 
                 # вывод на экран через кастомный метод
                 message_texts.lands_search_result_text(
-                    item=data.get('query_set')[page - 1],
-                    view_form='carousel'
+                    item=data.get('query_set')[page - 1]
                 ),
                 # кейборд из кастомного метода
                 reply_markup=keyboards.pagination_keyboard(
@@ -570,8 +564,7 @@ async def apartment_search_result(
                         photo_id,
                         caption=message_texts.apartments_search_result_text(
                                 room_count=room_count,
-                                item=item,
-                                view_form='cascade'
+                                item=item
                             ),
                         parse_mode='Markdown'
                     )
@@ -588,12 +581,12 @@ async def apartment_search_result(
             await callback.message.answer(
                 message_texts.apartments_search_result_text(
                     int(room_count),
-                    query_set[page - 1],
-                    view_form='carousel'
+                    query_set[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
-                    1, pages_count,
-                    'apartment'
+                    page=page,
+                    pages=pages_count,
+                    category='apartment'
                 ),
                 parse_mode='Markdown'
             )
@@ -621,8 +614,7 @@ async def apartment_next(callback: CallbackQuery, state: FSMContext):
             await callback.message.edit_text(
                 message_texts.apartments_search_result_text(
                     int(data.get('room_count')),
-                    data.get('query_set')[page - 1],
-                    view_form='carousel'
+                    data.get('query_set')[page - 1]
                 ),
                 reply_markup=keyboards.pagination_keyboard(
                     page=page,
@@ -793,12 +785,19 @@ async def entering_description(message: Message, state: FSMContext):
     """Запись состояния"""
 
     answer = message.text
-    await state.update_data(description=answer)
-    await message.answer(
-        '🔻 На недвижимости есть обременение?',
-        reply_markup=keyboards.yes_no_keyboard('encumbrance')
-    )
-    await CallbackOnStart.next()
+    if len(message.text) <= 300:
+        await state.update_data(description=answer)
+        await message.answer(
+            '🔻 На недвижимости есть обременение?',
+            reply_markup=keyboards.yes_no_keyboard('encumbrance')
+        )
+        await CallbackOnStart.next()
+    else:
+        await message.answer(
+            message_texts.character_limit(len(message.text))
+        )
+        logging.error('Превышение лимита знаков')
+        await CallbackOnStart.Q7.set()
 
 
 @dp.callback_query_handler(
@@ -905,9 +904,10 @@ async def upload_photos(message: Message, state: FSMContext):
     if not flag:
         await state.update_data(photo=[message.photo[-1].file_id])
         flag = True
+        await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Напиши фразу: "Меня ждёт успех!"'
+            'Введите количество дней в году'
         )
         await CallbackOnStart.Q15.set()
     else:
@@ -922,7 +922,7 @@ async def upload_photos(message: Message, state: FSMContext):
 async def base_updating(message: Message, state: FSMContext):
 
     data = await state.get_data()
-
+    await asyncio.sleep(5)
     # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.apartment_to_db(data):
         await message.answer(
@@ -1085,12 +1085,19 @@ async def entering_room_price(message: Message, state: FSMContext):
 async def entering_room_description(message: Message, state: FSMContext):
 
     answer = message.text
-    await state.update_data(room_description=answer)
-    await message.answer(
-        '🔻 На недвижимости есть обременение?',
-        reply_markup=keyboards.yes_no_keyboard(item='room_encumbrance')
-    )
-    await RoomCallbackStates.next()
+    if len(message.text) <= 300:
+        await state.update_data(room_description=answer)
+        await message.answer(
+            '🔻 На недвижимости есть обременение?',
+            reply_markup=keyboards.yes_no_keyboard(item='room_encumbrance')
+            )
+        await RoomCallbackStates.next()
+    else:
+        await message.answer(
+            message_texts.character_limit(len(message.text))
+        )
+        logging.error('Превышение лимита знаков')
+        await RoomCallbackStates.R7.set()
 
 
 @dp.callback_query_handler(
@@ -1195,9 +1202,10 @@ async def room_upload_photos(message: Message, state: FSMContext):
     if not flag:
         await state.update_data(photo=[message.photo[-1].file_id])
         flag = True
+        await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Напиши фразу: "Меня ждёт успех!"'
+            'Введите количество дней в году'
         )
         await RoomCallbackStates.R15.set()
     else:
@@ -1214,6 +1222,7 @@ async def room_base_updating(message: Message, state: FSMContext):
     data = await state.get_data()
 
     # ЗАПИСЬ В БАЗУ И выдача
+    await asyncio.sleep(5)
     if not DB_Worker.room_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
@@ -1537,12 +1546,19 @@ async def entering_house_encumbrance(
     message: Message, state: FSMContext
 ):
     answer = message.text
-    await state.update_data(house_description=answer)
-    await message.answer(
-        '🔻 На доме есть обременение?',
-        reply_markup=keyboards.yes_no_keyboard('house_encumbrance')
-    )
-    await HouseCallbackStates.next()
+    if len(message.text) <= 300:
+        await state.update_data(house_description=answer)
+        await message.answer(
+            '🔻 На доме есть обременение?',
+            reply_markup=keyboards.yes_no_keyboard('house_encumbrance')
+        )
+        await HouseCallbackStates.next()
+    else:
+        await message.answer(
+            message_texts.character_limit(len(message.text))
+        )
+        logging.error('Превышение лимита знаков')
+        await HouseCallbackStates.H15.set()
 
 
 @dp.callback_query_handler(
@@ -1647,9 +1663,10 @@ async def house_upload_photos(message: Message, state: FSMContext):
     if not flag:
         await state.update_data(photo=[message.photo[-1].file_id])
         flag = True
+        await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Напиши фразу: "Меня ждёт успех!"'
+            'Введите количество дней в году'
         )
         await HouseCallbackStates.H23.set()
     else:
@@ -1666,6 +1683,7 @@ async def house_base_updating(message: Message, state: FSMContext):
     data = await state.get_data()
 
     # ЗАПИСЬ В БАЗУ И выдача
+    await asyncio.sleep(5)
     if not DB_Worker.house_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
@@ -1990,12 +2008,19 @@ async def entering_townhouse_encumbrance(
     message: Message, state: FSMContext
 ):
     answer = message.text
-    await state.update_data(townhouse_description=answer)
-    await message.answer(
-        '🔻 На таунхаусе есть обременение?',
-        reply_markup=keyboards.yes_no_keyboard('townhouse_encumbrance')
-    )
-    await TownHouseCallbackStates.next()
+    if len(message.text) <= 300:
+        await state.update_data(townhouse_description=answer)
+        await message.answer(
+            '🔻 На таунхаусе есть обременение?',
+            reply_markup=keyboards.yes_no_keyboard('townhouse_encumbrance')
+        )
+        await TownHouseCallbackStates.next()
+    else:
+        await message.answer(
+            message_texts.character_limit(len(message.text))
+        )
+        logging.error('Превышение лимита знаков')
+        await TownHouseCallbackStates.T15.set()
 
 
 @dp.callback_query_handler(
@@ -2100,9 +2125,10 @@ async def townhouse_upload_photos(message: Message, state: FSMContext):
     if not flag:
         await state.update_data(photo=[message.photo[-1].file_id])
         flag = True
+        await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Напиши фразу: "Меня ждёт успех!"'
+            'Введите количество дней в году'
         )
         await TownHouseCallbackStates.T23.set()
     else:
@@ -2117,7 +2143,7 @@ async def townhouse_upload_photos(message: Message, state: FSMContext):
 async def townhouse_base_updating(message: Message, state: FSMContext):
 
     data = await state.get_data()
-
+    await asyncio.sleep(5)
     # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.townhouse_to_db(data):
         await message.answer(
@@ -2395,12 +2421,19 @@ async def entering_land_encumbrance(
     message: Message, state: FSMContext
 ):
     answer = message.text
-    await state.update_data(land_description=answer)
-    await message.answer(
-        '🔻 На объекте есть обременение?',
-        reply_markup=keyboards.yes_no_keyboard('land_encumbrance')
-    )
-    await LandCallbackStates.next()
+    if len(message.text) <= 300:
+        await state.update_data(land_description=answer)
+        await message.answer(
+            '🔻 На объекте есть обременение?',
+            reply_markup=keyboards.yes_no_keyboard('land_encumbrance')
+        )
+        await LandCallbackStates.next()
+    else:
+        await message.answer(
+            message_texts.character_limit(len(message.text))
+        )
+        logging.error('Превышение лимита знаков')
+        await LandCallbackStates.L13.set()
 
 
 @dp.callback_query_handler(
@@ -2510,9 +2543,10 @@ async def land_upload_photos(message: Message, state: FSMContext):
     if not flag:
         await state.update_data(photo=[message.photo[-1].file_id])
         flag = True
+        await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Напиши фразу: "Меня ждёт успех!"'
+            'Введите количество дней в году'
         )
         await LandCallbackStates.L21.set()
     else:
@@ -2527,7 +2561,7 @@ async def land_upload_photos(message: Message, state: FSMContext):
 async def land_base_updating(message: Message, state: FSMContext):
 
     data = await state.get_data()
-
+    await asyncio.sleep(5)
     # ЗАПИСЬ В БАЗУ И выдача
     if not DB_Worker.land_to_db(data):
         await message.answer(

@@ -57,7 +57,7 @@ class Apartment(models.Model):
         verbose_name='Этажность дома'
     )
     area = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='площадь квартиры'
     )
@@ -68,7 +68,7 @@ class Apartment(models.Model):
     )
     price = models.DecimalField(
         decimal_places=2,
-        max_digits=10,
+        max_digits=15,
         verbose_name='Цена',
         blank=True
     )
@@ -133,7 +133,7 @@ class Room(models.Model):
         verbose_name='Этажность дома'
     )
     area = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='площадь комнаты'
     )
@@ -144,7 +144,7 @@ class Room(models.Model):
     )
     price = models.DecimalField(
         decimal_places=2,
-        max_digits=10,
+        max_digits=15,
         verbose_name='Цена',
         blank=True
     )
@@ -191,7 +191,7 @@ class House(models.Model):
         verbose_name='Название улицы'
     )
     area = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='Площадь дома'
     )
@@ -202,7 +202,7 @@ class House(models.Model):
     )
     price = models.DecimalField(
         decimal_places=2,
-        max_digits=10,
+        max_digits=15,
         verbose_name='Цена',
         blank=True
     )
@@ -249,7 +249,7 @@ class House(models.Model):
         verbose_name='Подъезд к участку'
     )
     area_of_land = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='Площадь участка'
     )
@@ -294,7 +294,7 @@ class TownHouse(models.Model):
         verbose_name='Название улицы'
     )
     area = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='Площадь дома'
     )
@@ -305,7 +305,7 @@ class TownHouse(models.Model):
     )
     price = models.DecimalField(
         decimal_places=2,
-        max_digits=10,
+        max_digits=15,
         verbose_name='Цена',
         blank=True
     )
@@ -352,7 +352,7 @@ class TownHouse(models.Model):
         verbose_name='Подъезд к участку'
     )
     area_of_land = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='Площадь участка'
     )
@@ -407,7 +407,7 @@ class Land(models.Model):
     )
     price = models.DecimalField(
         decimal_places=2,
-        max_digits=10,
+        max_digits=15,
         verbose_name='Цена',
         blank=True
     )
@@ -454,7 +454,7 @@ class Land(models.Model):
         verbose_name='Подъезд к участку'
     )
     area_of_land = models.DecimalField(
-        max_digits=4,
+        max_digits=10,
         decimal_places=1,
         verbose_name='Площадь участка'
     )
