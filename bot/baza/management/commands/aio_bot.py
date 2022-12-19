@@ -785,7 +785,7 @@ async def entering_description(message: Message, state: FSMContext):
     """Запись состояния"""
 
     answer = message.text
-    if len(message.text) <= 300:
+    if len(message.text) <= 200:
         await state.update_data(description=answer)
         await message.answer(
             '🔻 На недвижимости есть обременение?',
@@ -1085,7 +1085,7 @@ async def entering_room_price(message: Message, state: FSMContext):
 async def entering_room_description(message: Message, state: FSMContext):
 
     answer = message.text
-    if len(message.text) <= 300:
+    if len(message.text) <= 200:
         await state.update_data(room_description=answer)
         await message.answer(
             '🔻 На недвижимости есть обременение?',
@@ -1546,7 +1546,7 @@ async def entering_house_encumbrance(
     message: Message, state: FSMContext
 ):
     answer = message.text
-    if len(message.text) <= 300:
+    if len(message.text) <= 200:
         await state.update_data(house_description=answer)
         await message.answer(
             '🔻 На доме есть обременение?',
@@ -2008,7 +2008,7 @@ async def entering_townhouse_encumbrance(
     message: Message, state: FSMContext
 ):
     answer = message.text
-    if len(message.text) <= 300:
+    if len(message.text) <= 200:
         await state.update_data(townhouse_description=answer)
         await message.answer(
             '🔻 На таунхаусе есть обременение?',
@@ -2421,7 +2421,7 @@ async def entering_land_encumbrance(
     message: Message, state: FSMContext
 ):
     answer = message.text
-    if len(message.text) <= 300:
+    if len(message.text) <= 200:
         await state.update_data(land_description=answer)
         await message.answer(
             '🔻 На объекте есть обременение?',
