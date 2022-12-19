@@ -1,16 +1,15 @@
 import logging
 import os
 import re
+import asyncio
 
 import django
-import asyncio
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.types import (CallbackQuery, ContentType, InputFile, MediaGroup,
                            Message)
 from baza.answer_messages import message_texts
-from baza.db_worker import DB_Worker
 from baza.models import (Apartment, House, Individuals, Land, Room,
                          Subscriptors, TownHouse)
 from baza.states import (CallbackOnStart, HouseCallbackStates,
@@ -20,6 +19,7 @@ from baza.states import (CallbackOnStart, HouseCallbackStates,
 from baza.utils import Output, keyboards
 from decouple import config
 from django.core.management.base import BaseCommand
+from baza.db_worker import DB_Worker
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'rest.settings')
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
@@ -907,7 +907,7 @@ async def upload_photos(message: Message, state: FSMContext):
         await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Введите количество дней в году'
+            message_texts.on.get('code_word_text')
         )
         await CallbackOnStart.Q15.set()
     else:
@@ -920,6 +920,7 @@ async def upload_photos(message: Message, state: FSMContext):
 
 @dp.message_handler(state=CallbackOnStart.Q15)
 async def base_updating(message: Message, state: FSMContext):
+    await state.update_data(code_word=message.text)
 
     data = await state.get_data()
     await asyncio.sleep(5)
@@ -1200,27 +1201,27 @@ async def room_upload_photos(message: Message, state: FSMContext):
     """Загрузка фото магия"""
     global flag
     if not flag:
-        await state.update_data(photo=[message.photo[-1].file_id])
+        await state.update_data(room_photo=[message.photo[-1].file_id])
         flag = True
         await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Введите количество дней в году'
+            message_texts.on.get('code_word_text')
         )
         await RoomCallbackStates.R15.set()
     else:
         photo_list = await state.get_data()
         flag = True
-        photos = photo_list.get("photo")
+        photos = photo_list.get("room_photo")
         photos.append(message.photo[-1].file_id)
-        await state.update_data(photo=photos)
+        await state.update_data(room_photo=photos)
 
 
 @dp.message_handler(state=RoomCallbackStates.R15)
 async def room_base_updating(message: Message, state: FSMContext):
+    await state.update_data(room_code_word=message.text)
 
     data = await state.get_data()
-
     # ЗАПИСЬ В БАЗУ И выдача
     await asyncio.sleep(5)
     if not DB_Worker.room_to_db(data):
@@ -1229,7 +1230,7 @@ async def room_base_updating(message: Message, state: FSMContext):
         )
     else:
         album = MediaGroup()
-        photo_list = data.get('photo')
+        photo_list = data.get('room_photo')
         for photo_id in photo_list:
             if photo_id == photo_list[-1]:
                 album.attach_photo(
@@ -1661,27 +1662,27 @@ async def house_upload_photos(message: Message, state: FSMContext):
     """Загрузка фото магия"""
     global flag
     if not flag:
-        await state.update_data(photo=[message.photo[-1].file_id])
+        await state.update_data(house_photo=[message.photo[-1].file_id])
         flag = True
         await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Введите количество дней в году'
+            message_texts.on.get('code_word_text')
         )
         await HouseCallbackStates.H23.set()
     else:
         photo_list = await state.get_data()
         flag = True
-        photos = photo_list.get("photo")
+        photos = photo_list.get("house_photo")
         photos.append(message.photo[-1].file_id)
-        await state.update_data(photo=photos)
+        await state.update_data(house_photo=photos)
 
 
 @dp.message_handler(state=HouseCallbackStates.H23)
 async def house_base_updating(message: Message, state: FSMContext):
+    await state.update_data(house_code_word=message.text)
 
     data = await state.get_data()
-
     # ЗАПИСЬ В БАЗУ И выдача
     await asyncio.sleep(5)
     if not DB_Worker.house_to_db(data):
@@ -1690,7 +1691,7 @@ async def house_base_updating(message: Message, state: FSMContext):
         )
     else:
         album = MediaGroup()
-        photo_list = data.get('photo')
+        photo_list = data.get('house_photo')
         for photo_id in photo_list:
             if photo_id == photo_list[-1]:
                 album.attach_photo(
@@ -2123,24 +2124,26 @@ async def townhouse_upload_photos(message: Message, state: FSMContext):
     """Загрузка фото магия"""
     global flag
     if not flag:
-        await state.update_data(photo=[message.photo[-1].file_id])
+        await state.update_data(townhouse_photo=[message.photo[-1].file_id])
         flag = True
         await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Введите количество дней в году'
+            message_texts.on.get('code_word_text')
         )
         await TownHouseCallbackStates.T23.set()
     else:
         photo_list = await state.get_data()
         flag = True
-        photos = photo_list.get("photo")
+        photos = photo_list.get("townhouse_photo")
         photos.append(message.photo[-1].file_id)
-        await state.update_data(photo=photos)
+        await state.update_data(townhouse_photo=photos)
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T23)
 async def townhouse_base_updating(message: Message, state: FSMContext):
+
+    await state.update_data(townhouse_code_word=message.text)
 
     data = await state.get_data()
     await asyncio.sleep(5)
@@ -2151,7 +2154,7 @@ async def townhouse_base_updating(message: Message, state: FSMContext):
         )
     else:
         album = MediaGroup()
-        photo_list = data.get('photo')
+        photo_list = data.get('townhouse_photo')
         for photo_id in photo_list:
             if photo_id == photo_list[-1]:
                 album.attach_photo(
@@ -2541,24 +2544,25 @@ async def land_upload_photos(message: Message, state: FSMContext):
     """Загрузка фото магия"""
     global flag
     if not flag:
-        await state.update_data(photo=[message.photo[-1].file_id])
+        await state.update_data(land_photo=[message.photo[-1].file_id])
         flag = True
         await asyncio.sleep(5)
         await bot.send_message(
             message.chat.id,
-            'Введите количество дней в году'
+            message_texts.on.get('code_word_text')
         )
         await LandCallbackStates.L21.set()
     else:
         photo_list = await state.get_data()
         flag = True
-        photos = photo_list.get("photo")
+        photos = photo_list.get("land_photo")
         photos.append(message.photo[-1].file_id)
-        await state.update_data(photo=photos)
+        await state.update_data(land_photo=photos)
 
 
 @dp.message_handler(state=LandCallbackStates.L21)
 async def land_base_updating(message: Message, state: FSMContext):
+    await state.update_data(land_code_word=message.text)
 
     data = await state.get_data()
     await asyncio.sleep(5)
@@ -2569,7 +2573,7 @@ async def land_base_updating(message: Message, state: FSMContext):
         )
     else:
         album = MediaGroup()
-        photo_list = data.get('photo')
+        photo_list = data.get('land_photo')
         for photo_id in photo_list:
             if photo_id == photo_list[-1]:
                 album.attach_photo(

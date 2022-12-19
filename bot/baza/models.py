@@ -107,6 +107,11 @@ class Apartment(models.Model):
         models.CharField(max_length=100),
         blank=True
     )
+    code_word = models.CharField(
+        max_length=200,
+        verbose_name='кодовое слово',
+        default='слово'
+    )
 
     class Meta:
         verbose_name = 'Квартира'
@@ -177,6 +182,11 @@ class Room(models.Model):
     photo_id = ArrayField(
         models.CharField(max_length=100),
         blank=True
+    )
+    code_word = models.CharField(
+        max_length=200,
+        verbose_name='кодовое слово',
+        default='слово'
     )
 
     class Meta:
@@ -281,6 +291,11 @@ class House(models.Model):
         models.CharField(max_length=100),
         blank=True
     )
+    code_word = models.CharField(
+        max_length=200,
+        verbose_name='кодовое слово',
+        default='слово'
+    )
 
     class Meta:
         verbose_name = 'дом'
@@ -384,6 +399,12 @@ class TownHouse(models.Model):
         models.CharField(max_length=100),
         blank=True
     )
+    code_word = models.CharField(
+        max_length=200,
+        verbose_name='кодовое слово',
+        default='слово'
+    )
+
 
     class Meta:
         verbose_name = 'Таунхаус'
@@ -479,6 +500,11 @@ class Land(models.Model):
     photo_id = ArrayField(
         models.CharField(max_length=100),
         blank=True
+    )
+    code_word = models.CharField(
+        max_length=200,
+        verbose_name='кодовое слово',
+        default='слово'
     )
 
     class Meta:
