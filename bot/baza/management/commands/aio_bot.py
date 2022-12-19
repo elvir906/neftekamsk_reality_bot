@@ -685,7 +685,7 @@ async def entering_house_number(message: Message, state: FSMContext):
     answer = message.text
     if '"' in answer:
         formatting_answer = answer.replace('"', '')
-        answer = formatting_answer.upper()
+        answer = formatting_answer
 
     if ' ' in answer:
         formatting_answer = answer.replace(' ', '')
@@ -984,7 +984,7 @@ async def enetering_rooms_house_number(
     answer = message.text
     if '"' in answer:
         formatting_answer = answer.replace('"', '')
-        answer = formatting_answer.upper()
+        answer = formatting_answer
 
     if ' ' in answer:
         formatting_answer = answer.replace(' ', '')
@@ -2224,7 +2224,7 @@ async def entering_land_purpose(message: Message, state: FSMContext):
     answer = message.text
     if '"' in answer:
         formatting_answer = answer.replace('"', '')
-        answer = formatting_answer.upper()
+        answer = formatting_answer
 
     if ' ' in answer:
         formatting_answer = answer.replace(' ', '')
