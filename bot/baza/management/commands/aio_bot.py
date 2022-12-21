@@ -191,6 +191,7 @@ async def rooms(callback: CallbackQuery, state: FSMContext):
     if data.get('view_form') == 'cascade':
 
         for item in query_set:
+            await asyncio.sleep(0.5)
             album = MediaGroup()
             photo_list = item.photo_id
             for photo_id in photo_list:
@@ -271,6 +272,7 @@ async def houses(callback: CallbackQuery, state: FSMContext):
     """Вид отображения каскадом"""
     if data.get('view_form') == 'cascade':
         for item in query_set:
+            await asyncio.sleep(0.5)
             album = MediaGroup()
             photo_list = item.photo_id
             for photo_id in photo_list:
@@ -354,6 +356,7 @@ async def townhouses(callback: CallbackQuery, state: FSMContext):
     """Вид отображения каскадом"""
     if data.get('view_form') == 'cascade':
         for item in query_set:
+            await asyncio.sleep(0.5)
             album = MediaGroup()
             photo_list = item.photo_id
             for photo_id in photo_list:
@@ -436,6 +439,7 @@ async def lands(callback: CallbackQuery, state: FSMContext):
     """Вид отображения каскадом"""
     if data.get('view_form') == 'cascade':
         for item in query_set:
+            await asyncio.sleep(0.5)
             album = MediaGroup()
             photo_list = item.photo_id
             for photo_id in photo_list:
@@ -551,6 +555,7 @@ async def apartment_search_result(
     """Вид отображения каскадом"""
     if data.get('view_form') == 'cascade':
         for item in query_set:
+            await asyncio.sleep(0.5)
             album = MediaGroup()
             photo_list = item.photo_id
             for photo_id in photo_list:

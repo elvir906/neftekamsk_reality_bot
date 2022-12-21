@@ -3,7 +3,7 @@ import logging
 
 from aiogram.dispatcher import FSMContext
 from baza.models import Apartment, House, Land, Room, TownHouse
-from decouple import config
+# from decouple import config
 
 # DB_NAME = config('DB_NAME')
 # POSTGRES_USER = config('POSTGRES_USER')
