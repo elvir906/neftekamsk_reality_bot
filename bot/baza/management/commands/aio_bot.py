@@ -68,9 +68,6 @@ async def about(message: Message):
 
 @dp.message_handler(commands=['getstatistics'])
 async def get_statistics(message: Message):
-    li = ['1', '2', '3', '4']
-    a = ', '.join(li)
-    print(a)
     await message.answer(message_texts.on.get('statistics'))
 
 
