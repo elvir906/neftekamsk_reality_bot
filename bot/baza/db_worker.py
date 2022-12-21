@@ -1,6 +1,7 @@
 import datetime as dt
 import logging
 
+from aiogram.dispatcher import FSMContext
 from baza.models import Apartment, House, Land, Room, TownHouse
 from decouple import config
 
@@ -22,7 +23,7 @@ from decouple import config
 
 
 class DB_Worker():
-    def apartment_to_db(state_data):
+    def apartment_to_db(state_data: FSMContext) -> bool:
         try:
             Apartment.objects.create(
                 room_quantity=state_data.get('room_count'),
@@ -48,7 +49,7 @@ class DB_Worker():
             logging.error(f'{e}')
             return False
 
-    def room_to_db(state_data):
+    def room_to_db(state_data: FSMContext) -> bool:
         try:
             Room.objects.create(
                 street_name=state_data.get('room_street_name'),
@@ -73,7 +74,7 @@ class DB_Worker():
             logging.error(f'{e}')
             return False
 
-    def house_to_db(state_data):
+    def house_to_db(state_data: FSMContext) -> bool:
         try:
             House.objects.create(
                 microregion=state_data.get('house_microregion'),
@@ -106,7 +107,7 @@ class DB_Worker():
             logging.error(f'{e}')
             return False
 
-    def townhouse_to_db(state_data):
+    def townhouse_to_db(state_data: FSMContext) -> bool:
         try:
             TownHouse.objects.create(
                 microregion=state_data.get('townhouse_microregion'),
@@ -139,7 +140,7 @@ class DB_Worker():
             logging.error(f'{e}')
             return False
 
-    def land_to_db(state_data):
+    def land_to_db(state_data: FSMContext) -> bool:
         try:
             Land.objects.create(
                 microregion=state_data.get('land_microregion'),
