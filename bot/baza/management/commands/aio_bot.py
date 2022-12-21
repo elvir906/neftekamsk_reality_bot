@@ -2,14 +2,11 @@ import asyncio
 import logging
 import os
 import re
-from typing import List, Union
 
 import django
-from aiogram import Bot, Dispatcher, executor, types
+from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.handler import CancelHandler
-from aiogram.dispatcher.middlewares import BaseMiddleware
 from aiogram.types import (CallbackQuery, ContentType, InputFile, MediaGroup,
                            Message)
 from baza.answer_messages import message_texts
@@ -42,50 +39,6 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 class Command(BaseCommand):
     def handle(self, *args, **options):
         executor.start_polling(dp, skip_updates=True)
-
-
-# class AlbumMiddleware(BaseMiddleware):
-#     """This middleware is for capturing media groups."""
-
-#     album_data: dict = {}
-
-#     def __init__(self, latency: Union[int, float] = 0.01):
-#         """
-#         You can provide custom latency to make sure
-#         albums are handled properly in highload.
-#         """
-#         self.latency = latency
-#         super().__init__()
-
-#     async def on_process_message(self, message: types.Message, data: dict):
-#         if not message.media_group_id:
-#             return
-
-#         try:
-#             self.album_data[message.media_group_id].append(message)
-#             raise CancelHandler()  # Tell aiogram to cancel handler for this group element
-#         except KeyError:
-#             self.album_data[message.media_group_id] = [message]
-#             await asyncio.sleep(self.latency)
-
-#             message.conf["is_last"] = True
-#             data["album"] = self.album_data[message.media_group_id]
-
-#     async def on_post_process_message(self, message: types.Message, result: dict, data: dict):
-#         """Clean up after handling our album."""
-#         if message.media_group_id and message.conf.get("is_last"):
-#             del self.album_data[message.media_group_id]
-
-
-# dp.middleware.setup(AlbumMiddleware())
-
-
-# получение фото_айди при отправке фото боту
-# id фото отсутсвует
-# AgACAgIAAxkBAAIph2Oe7WYqCvXtgpk_HQbPiCEfo9EJAAL0wTEbeGn5SCsNsw8UadM1AQADAgADeQADLAQ
-# @dp.message_handler(content_types=ContentType.PHOTO)
-# async def photo_id(message: Message):
-#     await message.reply(message.photo[-1].file_id)
 
 
 @dp.message_handler(commands=['deleteobject'])
@@ -1227,7 +1180,7 @@ async def entering_room_agency_name(message: Message, state: FSMContext):
 
 
 @dp.message_handler(state=RoomCallbackStates.R13)
-async def entering_room_rialtor_name(message: Message, state: FSMContext):
+async def entering_room_realtor_name(message: Message, state: FSMContext):
 
     answer = message.text.title()
     global flag
@@ -1240,34 +1193,33 @@ async def entering_room_rialtor_name(message: Message, state: FSMContext):
 
 
 @dp.message_handler(state=RoomCallbackStates.R14, content_types=ContentType.PHOTO)
-async def room_upload_photos(message: Message, state: FSMContext):
-    """Загрузка фото магия"""
-    global flag
-    if not flag:
-        flag = True
-        await state.update_data(room_photo=[message.photo[-1].file_id])
-        await asyncio.sleep(3)
-        await bot.send_message(
-            message.chat.id,
-            message_texts.on.get('code_word_text')
-        )
+async def report_room_photo(message: Message):
+    global images
+    key = str(message.from_user.id)
+    images.setdefault(key, [])
+
+    if len(images[key]) == 0:
+        images[key].append(message.photo[-1].file_id)
+        await message.answer(message_texts.on.get('code_word_text'))
         await RoomCallbackStates.R15.set()
     else:
-        photo_list = await state.get_data()
-        flag = True
-        photos = photo_list.get("room_photo")
-        photos.append(message.photo[-1].file_id)
-        print(photos)
-        await state.update_data(room_photo=photos)
+        images[key].append(message.photo[-1].file_id)
 
 
 @dp.message_handler(state=RoomCallbackStates.R15)
 async def room_base_updating(message: Message, state: FSMContext):
+
     await state.update_data(room_code_word=message.text)
 
+    user_id = str(message.from_user.id)
+    photo = images.get(user_id)
+    images.pop(user_id)
+    await state.update_data(room_photo=photo)
+
     data = await state.get_data()
+
     # ЗАПИСЬ В БАЗУ И выдача
-    await asyncio.sleep(3)
+    await asyncio.sleep(2)
     if not DB_Worker.room_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
@@ -1702,33 +1654,34 @@ async def house_entering_rieltor_name(message: Message, state: FSMContext):
 
 
 @dp.message_handler(state=HouseCallbackStates.H22, content_types=ContentType.PHOTO)
-async def house_upload_photos(message: Message, state: FSMContext):
-    """Загрузка фото магия"""
-    global flag
-    if not flag:
-        await state.update_data(house_photo=[message.photo[-1].file_id])
-        flag = True
-        await asyncio.sleep(3)
-        await bot.send_message(
-            message.chat.id,
-            message_texts.on.get('code_word_text')
-        )
+async def house_report_photo(message: Message):
+    global images
+    key = str(message.from_user.id)
+    images.setdefault(key, [])
+
+    if len(images[key]) == 0:
+        images[key].append(message.photo[-1].file_id)
+        await message.answer(message_texts.on.get('code_word_text'))
         await HouseCallbackStates.H23.set()
     else:
-        photo_list = await state.get_data()
-        flag = True
-        photos = photo_list.get("house_photo")
-        photos.append(message.photo[-1].file_id)
-        await state.update_data(house_photo=photos)
+        images[key].append(message.photo[-1].file_id)
+
 
 
 @dp.message_handler(state=HouseCallbackStates.H23)
 async def house_base_updating(message: Message, state: FSMContext):
+
     await state.update_data(house_code_word=message.text)
 
+    user_id = str(message.from_user.id)
+    photo = images.get(user_id)
+    images.pop(user_id)
+    await state.update_data(house_photo=photo)
+
     data = await state.get_data()
+
     # ЗАПИСЬ В БАЗУ И выдача
-    await asyncio.sleep(3)
+    await asyncio.sleep(2)
     if not DB_Worker.house_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
@@ -2164,24 +2117,17 @@ async def townhous_upload_photos(message: Message, state: FSMContext):
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T22, content_types=ContentType.PHOTO)
-async def townhouse_upload_photos(message: Message, state: FSMContext):
-    """Загрузка фото магия"""
-    global flag
-    if not flag:
-        await state.update_data(townhouse_photo=[message.photo[-1].file_id])
-        flag = True
-        await asyncio.sleep(3)
-        await bot.send_message(
-            message.chat.id,
-            message_texts.on.get('code_word_text')
-        )
+async def townhouse_report_photo(message: Message):
+    global images
+    key = str(message.from_user.id)
+    images.setdefault(key, [])
+
+    if len(images[key]) == 0:
+        images[key].append(message.photo[-1].file_id)
+        await message.answer(message_texts.on.get('code_word_text'))
         await TownHouseCallbackStates.T23.set()
     else:
-        photo_list = await state.get_data()
-        flag = True
-        photos = photo_list.get("townhouse_photo")
-        photos.append(message.photo[-1].file_id)
-        await state.update_data(townhouse_photo=photos)
+        images[key].append(message.photo[-1].file_id)
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T23)
@@ -2189,9 +2135,15 @@ async def townhouse_base_updating(message: Message, state: FSMContext):
 
     await state.update_data(townhouse_code_word=message.text)
 
+    user_id = str(message.from_user.id)
+    photo = images.get(user_id)
+    images.pop(user_id)
+    await state.update_data(townhouse_photo=photo)
+
     data = await state.get_data()
-    await asyncio.sleep(3)
+
     # ЗАПИСЬ В БАЗУ И выдача
+    await asyncio.sleep(2)
     if not DB_Worker.townhouse_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
@@ -2580,37 +2532,34 @@ async def land_photo_upload(
     await LandCallbackStates.L20.set()
 
 
-@dp.message_handler(
-    state=LandCallbackStates.L20,
-    content_types=ContentType.PHOTO
-)
-async def land_upload_photos(message: Message, state: FSMContext):
-    """Загрузка фото магия"""
-    global flag
-    if not flag:
-        await state.update_data(land_photo=[message.photo[-1].file_id])
-        flag = True
-        await asyncio.sleep(3)
-        await bot.send_message(
-            message.chat.id,
-            message_texts.on.get('code_word_text')
-        )
+@dp.message_handler(state=LandCallbackStates.L20, content_types=ContentType.PHOTO)
+async def land_report_photo(message: Message):
+    global images
+    key = str(message.from_user.id)
+    images.setdefault(key, [])
+
+    if len(images[key]) == 0:
+        images[key].append(message.photo[-1].file_id)
+        await message.answer(message_texts.on.get('code_word_text'))
         await LandCallbackStates.L21.set()
     else:
-        photo_list = await state.get_data()
-        flag = True
-        photos = photo_list.get("land_photo")
-        photos.append(message.photo[-1].file_id)
-        await state.update_data(land_photo=photos)
+        images[key].append(message.photo[-1].file_id)
 
 
 @dp.message_handler(state=LandCallbackStates.L21)
 async def land_base_updating(message: Message, state: FSMContext):
+
     await state.update_data(land_code_word=message.text)
 
+    user_id = str(message.from_user.id)
+    photo = images.get(user_id)
+    images.pop(user_id)
+    await state.update_data(land_photo=photo)
+
     data = await state.get_data()
-    await asyncio.sleep(3)
+
     # ЗАПИСЬ В БАЗУ И выдача
+    await asyncio.sleep(2)
     if not DB_Worker.land_to_db(data):
         await message.answer(
             message_texts.on.get('sorry_about_error')
