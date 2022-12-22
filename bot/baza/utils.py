@@ -288,7 +288,7 @@ class keyboards():
             buttons.append(f'ID {item.pk} {item.room_quantity}к.кв. '
                            + f'{item.street_name} {item.number_of_house} '
                            + f'- {int(item.price)} ₽')
-            callback_data_string.append([item.pk, 'apartment'])
+            callback_data_string.append([item.pk, 'Apartment'])
 
         for item in room_queryset:
             buttons.append(f'ID {item.pk} Комната {item.street_name} '
