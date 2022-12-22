@@ -3,9 +3,9 @@ from django.db import models
 
 
 class Individuals(models.Model):
-    user_id = models.CharField(
-        max_length=15,
-        verbose_name='id'
+    user_id = models.BigIntegerField(
+        verbose_name='id',
+        default=1
     )
     name = models.CharField(
         max_length=200,
@@ -112,6 +112,10 @@ class Apartment(models.Model):
         verbose_name='кодовое слово',
         default='слово'
     )
+    user_id = models.BigIntegerField(
+        verbose_name='id',
+        default=1
+    )
 
     class Meta:
         verbose_name = 'Квартира'
@@ -187,6 +191,10 @@ class Room(models.Model):
         max_length=200,
         verbose_name='кодовое слово',
         default='слово'
+    )
+    user_id = models.BigIntegerField(
+        verbose_name='id',
+        default=1
     )
 
     class Meta:
@@ -296,6 +304,10 @@ class House(models.Model):
         verbose_name='кодовое слово',
         default='слово'
     )
+    user_id = models.BigIntegerField(
+        verbose_name='id',
+        default=1
+    )
 
     class Meta:
         verbose_name = 'дом'
@@ -404,7 +416,10 @@ class TownHouse(models.Model):
         verbose_name='кодовое слово',
         default='слово'
     )
-
+    user_id = models.BigIntegerField(
+        verbose_name='id',
+        default=1
+    )
 
     class Meta:
         verbose_name = 'Таунхаус'
@@ -505,6 +520,10 @@ class Land(models.Model):
         max_length=200,
         verbose_name='кодовое слово',
         default='слово'
+    )
+    user_id = models.BigIntegerField(
+        verbose_name='id',
+        default=1
     )
 
     class Meta:

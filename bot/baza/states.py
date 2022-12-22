@@ -129,3 +129,10 @@ class EditCallbackStates(StatesGroup):
     E1 = State()
     E2 = State()
     E3 = State()
+
+
+class DeleteCallbackStates(StatesGroup):
+    D1 = State()
+    D2 = State()
+    D3 = State()
+    D4 = State()

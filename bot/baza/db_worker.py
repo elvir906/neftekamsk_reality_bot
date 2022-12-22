@@ -42,6 +42,7 @@ class DB_Worker():
                 author=state_data.get('rieltor_name'),
                 photo_id=state_data.get('photo'),
                 code_word=state_data.get('code_word'),
+                user_id=state_data.get('user_id'),
                 pub_date=dt.datetime.now()
             )
             return True
@@ -67,6 +68,7 @@ class DB_Worker():
                 author=state_data.get('room_rieltor_name'),
                 photo_id=state_data.get('room_photo'),
                 code_word=state_data.get('room_code_word'),
+                user_id=state_data.get('room_user_id'),
                 pub_date=dt.datetime.now()
             )
             return True
@@ -100,6 +102,7 @@ class DB_Worker():
                 author=state_data.get('house_rieltor_name'),
                 photo_id=state_data.get('house_photo'),
                 code_word=state_data.get('house_code_word'),
+                user_id=state_data.get('house_user_id'),
                 pub_date=dt.datetime.now()
             )
             return True
@@ -133,6 +136,7 @@ class DB_Worker():
                 author=state_data.get('townhouse_rieltor_name'),
                 photo_id=state_data.get('townhouse_photo'),
                 code_word=state_data.get('townhouse_code_word'),
+                user_id=state_data.get('townhouse_user_id'),
                 pub_date=dt.datetime.now()
             )
             return True
@@ -164,6 +168,7 @@ class DB_Worker():
                 author=state_data.get('land_rieltor_name'),
                 photo_id=state_data.get('land_photo'),
                 code_word=state_data.get('land_code_word'),
+                user_id=state_data.get('land_user_id'),
                 pub_date=dt.datetime.now()
             )
             return True

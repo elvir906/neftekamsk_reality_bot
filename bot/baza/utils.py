@@ -262,23 +262,23 @@ class keyboards():
         keyboard.row(key_4)
         return keyboard
 
-    def objects_list_keyboard(searching_phone_number: str):
+    def objects_list_keyboard(searching_user_id: int):
         keyboard = InlineKeyboardMarkup()
 
         apartment_queryset = Apartment.objects.filter(
-            phone_number=searching_phone_number
+            user_id=searching_user_id
         )
         room_queryset = Room.objects.filter(
-            phone_number=searching_phone_number
+            user_id=searching_user_id
         )
         house_queryset = House.objects.filter(
-            phone_number=searching_phone_number
+            user_id=searching_user_id
         )
         townhouse_queryset = TownHouse.objects.filter(
-            phone_number=searching_phone_number
+            user_id=searching_user_id
         )
         land_queryset = Land.objects.filter(
-            phone_number=searching_phone_number
+            user_id=searching_user_id
         )
 
         buttons = []

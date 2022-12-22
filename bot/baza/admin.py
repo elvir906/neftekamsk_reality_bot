@@ -22,6 +22,7 @@ class ApartmentAdmin(admin.ModelAdmin):
         'phone_number',
         'agency',
         'code_word',
+        'user_id',
         'photo_id',
     )
 
@@ -43,6 +44,7 @@ class RoomAdmin (admin.ModelAdmin):
         'phone_number',
         'agency_name',
         'code_word',
+        'user_id',
         'photo_id',
     )
 
@@ -72,6 +74,7 @@ class HouseAdmin(admin.ModelAdmin):
         'phone_number',
         'agency_name',
         'code_word',
+        'user_id',
         'photo_id',
     )
 
@@ -101,6 +104,7 @@ class TownHouseAdmin(admin.ModelAdmin):
         'phone_number',
         'agency_name',
         'code_word',
+        'user_id',
         'photo_id',
     )
 
@@ -125,6 +129,7 @@ class LandAdmin(admin.ModelAdmin):
         'phone_number',
         'agency_name',
         'code_word',
+        'user_id',
         'photo_id',
     )
 

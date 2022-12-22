@@ -16,7 +16,7 @@ from baza.models import (Apartment, House, Individuals, Land, Room,
 from baza.states import (CallbackOnStart, HouseCallbackStates,
                          LandCallbackStates, MyObjectsCallbackStates,
                          PriceEditCallbackStates, RoomCallbackStates,
-                         TownHouseCallbackStates)
+                         TownHouseCallbackStates, DeleteCallbackStates)
 from baza.utils import Output, keyboards
 from decouple import config
 from django.core.management.base import BaseCommand
@@ -43,7 +43,54 @@ class Command(BaseCommand):
 
 @dp.message_handler(commands=['deleteobject'])
 async def delete_object(message: Message):
-    await message.answer(message_texts.on.get('delete'))
+    user_id = message.from_user.id
+
+    cond1 = Apartment.objects.filter(user_id=user_id).exists()
+    cond2 = Room.objects.filter(user_id=user_id).exists()
+    cond3 = House.objects.filter(user_id=user_id).exists()
+    cond4 = TownHouse.objects.filter(user_id=user_id).exists()
+    cond5 = Land.objects.filter(user_id=user_id).exists()
+
+    big_cond = cond1 or cond2 or cond3 or cond4 or cond5
+
+    if big_cond:
+        await message.answer(
+            'Выберите объект для удаления:',
+            reply_markup=keyboards.objects_list_keyboard(user_id)
+        )
+        await DeleteCallbackStates.D2.set()
+    else:
+        await message.answer(
+            ' У вас нет объектов в базе'
+        )
+
+
+@dp.callback_query_handler(state=DeleteCallbackStates.D2)
+async def deleting_object(
+    callback: CallbackQuery, state: FSMContext
+):
+    category = callback.data.split()[1]
+    id = callback.data.split()[0]
+    await state.update_data(searching_category=category)
+    await state.update_data(searching_id=id)
+
+    try:
+        data = await state.get_data()
+        class_name = Output.str_to_class(data.get('searching_category'))
+        class_name.objects.filter(pk=data.get('searching_id')).delete()
+        await callback.message.answer(
+            'Сделано!'
+        )
+        await state.finish()
+    except Exception as e:
+        await callback.message.answer(
+            'Во время удаления возникла ошибка, попробуйте снова.'
+            + 'Если ошибка поторится, напишиет об это м @davletelvir'
+        )
+        logging.error(
+            f'Ошибка удаления объекта, {e}'
+        )
+        await DeleteCallbackStates.D2.set()
 
 
 @dp.message_handler(commands=['aqidel'])
@@ -914,10 +961,11 @@ async def base_updating(message: Message, state: FSMContext):
 
     await state.update_data(code_word=message.text)
 
-    user_id = str(message.from_user.id)
-    photo = images.get(user_id)
-    images.pop(user_id)
+    user_id = message.from_user.id
+    photo = images.get(str(user_id))
+    images.pop(str(user_id))
     await state.update_data(photo=photo)
+    await state.update_data(user_id=user_id)
 
     data = await state.get_data()
 
@@ -1213,10 +1261,11 @@ async def room_base_updating(message: Message, state: FSMContext):
 
     await state.update_data(room_code_word=message.text)
 
-    user_id = str(message.from_user.id)
-    photo = images.get(user_id)
-    images.pop(user_id)
+    user_id = message.from_user.id
+    photo = images.get(str(user_id))
+    images.pop(str(user_id))
     await state.update_data(room_photo=photo)
+    await state.update_data(room_user_id=user_id)
 
     data = await state.get_data()
 
@@ -1675,10 +1724,11 @@ async def house_base_updating(message: Message, state: FSMContext):
 
     await state.update_data(house_code_word=message.text)
 
-    user_id = str(message.from_user.id)
-    photo = images.get(user_id)
-    images.pop(user_id)
+    user_id = message.from_user.id
+    photo = images.get(str(user_id))
+    images.pop(str(user_id))
     await state.update_data(house_photo=photo)
+    await state.update_data(house_user_id=user_id)
 
     data = await state.get_data()
 
@@ -2137,10 +2187,11 @@ async def townhouse_base_updating(message: Message, state: FSMContext):
 
     await state.update_data(townhouse_code_word=message.text)
 
-    user_id = str(message.from_user.id)
-    photo = images.get(user_id)
-    images.pop(user_id)
+    user_id = message.from_user.id
+    photo = images.get(str(user_id))
+    images.pop(str(user_id))
     await state.update_data(townhouse_photo=photo)
+    await state.update_data(townhouse_user_id=user_id)
 
     data = await state.get_data()
 
@@ -2553,10 +2604,11 @@ async def land_base_updating(message: Message, state: FSMContext):
 
     await state.update_data(land_code_word=message.text)
 
-    user_id = str(message.from_user.id)
-    photo = images.get(user_id)
-    images.pop(user_id)
+    user_id = message.from_user.id
+    photo = images.get(str(user_id))
+    images.pop(str(user_id))
     await state.update_data(land_photo=photo)
+    await state.update_data(land_user_id=user_id)
 
     data = await state.get_data()
 
@@ -2585,24 +2637,12 @@ async def land_base_updating(message: Message, state: FSMContext):
 
 
 @dp.message_handler(commands=['myobjects'])
-async def my_objects(message: Message):
-    """Ответ на кнопку просмотра объектов пользователя."""
-
-    await message.answer(
-        message_texts.on.get('phone_number_entering_text_for_editing')
-    )
-    await MyObjectsCallbackStates.MO1.set()
-
-
-@dp.message_handler(state=MyObjectsCallbackStates.MO1)
-async def entering_phone_number_for_searching(
-    message: Message, state: FSMContext
-):
-    apartment_queryset = Apartment.objects.filter(phone_number=message.text)
-    room_queryset = Room.objects.filter(phone_number=message.text)
-    house_queryset = House.objects.filter(phone_number=message.text)
-    townhouse_queryset = TownHouse.objects.filter(phone_number=message.text)
-    land_queryset = Land.objects.filter(phone_number=message.text)
+async def entering_phone_number_for_searching(message: Message):
+    apartment_queryset = Apartment.objects.filter(user_id=message.from_user.id)
+    room_queryset = Room.objects.filter(user_id=message.from_user.id)
+    house_queryset = House.objects.filter(user_id=message.from_user.id)
+    townhouse_queryset = TownHouse.objects.filter(user_id=message.from_user.id)
+    land_queryset = Land.objects.filter(user_id=message.from_user.id)
 
     apartment_count = apartment_queryset.count()
     room_count = room_queryset.count()
@@ -2658,46 +2698,31 @@ async def entering_phone_number_for_searching(
             parse_mode='Markdown'
         )
 
-    await state.finish()
-
 
 @dp.message_handler(commands=['editprice'])
 async def edit_price(message: Message):
     """Ответ на кнопку редактирования цены."""
+    user_id = message.from_user.id
 
-    await message.answer(
-        message_texts.on.get('phone_number_entering_text_for_editing')
-    )
-    await PriceEditCallbackStates.EP1.set()
-
-
-@dp.message_handler(state=PriceEditCallbackStates.EP1)
-async def object_choice_for_editing(
-    message: Message, state: FSMContext
-):
-    cond1 = Apartment.objects.filter(phone_number=message.text).exists()
-    cond2 = Room.objects.filter(phone_number=message.text).exists()
-    cond3 = House.objects.filter(phone_number=message.text).exists()
-    cond4 = TownHouse.objects.filter(phone_number=message.text).exists()
-    cond5 = Land.objects.filter(phone_number=message.text).exists()
+    cond1 = Apartment.objects.filter(user_id=user_id).exists()
+    cond2 = Room.objects.filter(user_id=user_id).exists()
+    cond3 = House.objects.filter(user_id=user_id).exists()
+    cond4 = TownHouse.objects.filter(user_id=user_id).exists()
+    cond5 = Land.objects.filter(user_id=user_id).exists()
 
     big_cond = cond1 or cond2 or cond3 or cond4 or cond5
 
-    if re.match(r"^[0-9]+$", message.text) and big_cond:
+    # if re.match(r"^[0-9]+$", message.text) and big_cond:
+    if big_cond:
         await message.answer(
             '🔻 Выберите объект, цену которого вы хотите изменить',
-            reply_markup=keyboards.objects_list_keyboard(message.text)
+            reply_markup=keyboards.objects_list_keyboard(user_id)
         )
-        await PriceEditCallbackStates.next()
+        await PriceEditCallbackStates.EP2.set()
     else:
         await message.answer(
-            ' Вы ошиблись с вводом номера телефона. '
-            + f'Введённый вами номер телефона {message.text} '
-            + 'не соответствует формату "89ххххххххх" или такого в базе нет.'
-            + '\n\n'
-            + '🔻 Введите заново номер телефона'
+            ' У вас нет объектов в базе'
         )
-        await PriceEditCallbackStates.EP1.set()
 
 
 @dp.callback_query_handler(
