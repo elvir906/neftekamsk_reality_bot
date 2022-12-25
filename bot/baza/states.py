@@ -136,3 +136,7 @@ class DeleteCallbackStates(StatesGroup):
     D2 = State()
     D3 = State()
     D4 = State()
+
+
+class Cancelling(StatesGroup):
+    cancel = State()

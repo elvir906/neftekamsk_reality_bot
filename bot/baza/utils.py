@@ -54,7 +54,7 @@ class keyboards():
             one_room_quantity, two_room_quantity,
             three_room_quantity, four_room_quantity, five_room_quantity
         ]
-
+        # кнопки количества квартир
         for i in range(0, len(buttons)-1):
             keyboard.add(
                 InlineKeyboardButton(
@@ -62,21 +62,23 @@ class keyboards():
                     callback_data=f'{buttons[i]}'
                 )
             )
-
+        # кнопка назад
         keyboard.add(
             InlineKeyboardButton(
                 buttons[len(buttons)-1],
                 callback_data=f'{buttons[len(buttons)-1]}'
             )
         )
-
         return keyboard
 
     def add_category_keyboard():
         """Генерация клавиатуры для добавления объекта"""
 
         keyboard = InlineKeyboardMarkup()
-        buttons = ['Квартиру', 'Комнату', 'Дом', 'Таунхаус', 'Участок']
+        buttons = [
+            'Квартиру', 'Комнату', 'Дом',
+            'Таунхаус', 'Участок'
+        ]
 
         for i in range(0, len(buttons)):
             keyboard.add(
@@ -84,6 +86,10 @@ class keyboards():
                     buttons[i], callback_data=f'{buttons[i]}'
                     )
             )
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def add_rooms_count_keyboard():
@@ -99,6 +105,11 @@ class keyboards():
             callback_data=f'add_{str(i)}_room'
         ) for i in range(1, 6)]
         keyboard.row(*buttons)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def floor_number_or_count_keyboard(object: str):
@@ -123,6 +134,11 @@ class keyboards():
                 callback_data=callback_data[i]
             ) for i in range(j * 6, 6 + 6 * j)]
             keyboard.row(*buttons)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def yes_no_keyboard(item: str):
@@ -136,6 +152,11 @@ class keyboards():
             text='Нет', callback_data=f'no_{item}'
         )
         keyboard.row(key_1, key_2)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def microregion_keyboard():
@@ -164,6 +185,10 @@ class keyboards():
         keyboard.row(buttons[12], buttons[13], buttons[14])
         keyboard.row(buttons[15], buttons[16])
 
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def purpose_choise_keyboard():
@@ -173,6 +198,11 @@ class keyboards():
         key_3 = InlineKeyboardButton(text='ЛПХ', callback_data='ЛПХ')
 
         keyboard.row(key_1, key_2, key_3)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def gaz_choise_keyboard():
@@ -193,6 +223,11 @@ class keyboards():
         keyboard.row(key_1)
         keyboard.row(key_3)
         keyboard.row(key_4)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def material_choice_keyboard():
@@ -214,6 +249,11 @@ class keyboards():
 
         for i in range(0, len(buttons)):
             keyboard.row(buttons[i])
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def water_choice_keyboard():
@@ -236,6 +276,11 @@ class keyboards():
         keyboard.row(key_2)
         keyboard.row(key_3)
         keyboard.row(key_4)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def road_choice_keyboard():
@@ -260,6 +305,11 @@ class keyboards():
         keyboard.row(key_2)
         keyboard.row(key_3)
         keyboard.row(key_4)
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def objects_list_keyboard(searching_user_id: int):
@@ -319,6 +369,11 @@ class keyboards():
                     + f'{callback_data_string[i][1]}'
                 )
             )
+
+        cancel_button = 'Отменить действие'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
         return keyboard
 
     def pagination_keyboard(page, pages, category):
@@ -335,6 +390,15 @@ class keyboards():
         keyboard.row(
             InlineKeyboardButton(text='Каскадная с фото', callback_data='cascade'),
             InlineKeyboardButton(text='Карусель без фото', callback_data='carousel')
+        )
+        return keyboard
+
+    def cancel_button():
+        keyboard = InlineKeyboardMarkup()
+        cancel_button = 'Отменить действие'
+        keyboard
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
         return keyboard
 
