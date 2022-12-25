@@ -1511,7 +1511,7 @@ async def entering_house_waters(
 ):
     await state.update_data(house_gaz=callback.data)
     await callback.message.edit_text(
-        '✏ В дома есть вода?',
+        '✏ В доме есть вода?',
         reply_markup=keyboards.water_choice_keyboard()
     )
     await HouseCallbackStates.next()
