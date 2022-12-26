@@ -16,7 +16,7 @@ from baza.models import (Apartment, House, Individuals, Land, Room,
 from baza.states import (CallbackOnStart, DeleteCallbackStates,
                          HouseCallbackStates, LandCallbackStates,
                          PriceEditCallbackStates, RoomCallbackStates,
-                         TownHouseCallbackStates, Cancelling)
+                         TownHouseCallbackStates)
 from baza.utils import Output, keyboards
 from decouple import config
 from django.core.management.base import BaseCommand
@@ -69,28 +69,34 @@ async def delete_object(message: Message):
 async def deleting_object(
     callback: CallbackQuery, state: FSMContext
 ):
-    category = callback.data.split()[1]
-    id = callback.data.split()[0]
-    await state.update_data(searching_category=category)
-    await state.update_data(searching_id=id)
-
-    try:
-        data = await state.get_data()
-        class_name = Output.str_to_class(data.get('searching_category'))
-        class_name.objects.filter(pk=data.get('searching_id')).delete()
-        await callback.message.answer(
-            'Сделано!'
+    if callback.data == 'Отмена':
+        await callback.message.edit_text(
+            'Действие отменено'
         )
         await state.finish()
-    except Exception as e:
-        await callback.message.answer(
-            'Во время удаления возникла ошибка, попробуйте снова.'
-            + 'Если ошибка поторится, напишиет об это м @davletelvir'
-        )
-        logging.error(
-            f'Ошибка удаления объекта, {e}'
-        )
-        await DeleteCallbackStates.D2.set()
+    else:
+        category = callback.data.split()[1]
+        id = callback.data.split()[0]
+        await state.update_data(searching_category=category)
+        await state.update_data(searching_id=id)
+
+        try:
+            data = await state.get_data()
+            class_name = Output.str_to_class(data.get('searching_category'))
+            class_name.objects.filter(pk=data.get('searching_id')).delete()
+            await callback.message.answer(
+                'Сделано!'
+            )
+            await state.finish()
+        except Exception as e:
+            await callback.message.answer(
+                'Во время удаления возникла ошибка, попробуйте снова.'
+                + 'Если ошибка поторится, напишиет об это м @davletelvir'
+            )
+            logging.error(
+                f'Ошибка удаления объекта, {e}'
+            )
+            await DeleteCallbackStates.D2.set()
 
 
 @dp.message_handler(commands=['aqidel'])
@@ -709,7 +715,7 @@ async def entering_room_count(
     await state.update_data(room_count=callback.data[4])
     await callback.message.edit_text(
         '✏ Напишите название улицы.\n\n'
-        'или слово "Стоп" для отмены'
+        + '🙅‍♂️ Для отмены действия напишите "Стоп"'
     )
     await CallbackOnStart.Q1.set()
 
@@ -732,7 +738,7 @@ async def entering_street_name(
 
         await message.answer(
             '✏ Напишите номер дома в формате 5, 5А или 91 корп.1\n\n'
-        'или слово "Стоп" для отмены'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
         )
         await CallbackOnStart.next()
 
@@ -770,12 +776,12 @@ async def entering_house_number(message: Message, state: FSMContext):
     '5_afloor', '6_afloor', '7_afloor', '8_afloor',
     '9_afloor', '10_afloor', '11_afloor', '12_afloor',
     '13_afloor', '14_afloor', '15_afloor', '16_afloor',
-    '17_afloor', '18_afloor', 'Отменить действие'
+    '17_afloor', '18_afloor', 'Отменить внесение объекта'
 ])
 async def entering_floor(callback: CallbackQuery, state: FSMContext):
     """Ответ на кнопку выбора этажа квартиры"""
-    if callback.data == 'Отменить действие':
-        await callback.message.answer(
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
             'Действие отменено'
         )
         await state.finish()
@@ -795,12 +801,12 @@ async def entering_floor(callback: CallbackQuery, state: FSMContext):
     '5_afloors', '6_afloors', '7_afloors', '8_afloors',
     '9_afloors', '10_afloors', '11_afloors', '12_afloors',
     '13_afloors', '14_afloors', '15_afloors', '16_afloors',
-    '17_afloors', '18_afloors', 'Отменить действие'
+    '17_afloors', '18_afloors', 'Отменить внесение объекта'
 ])
 async def entering_floors(callback: CallbackQuery, state: FSMContext):
     """Ответ на кнопку выбора этажности дома"""
-    if callback.data == 'Отменить действие':
-        await callback.message.answer(
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
             'Действие отменено'
         )
         await state.finish()
@@ -810,7 +816,7 @@ async def entering_floors(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text(
             '✏ Напишите площадь квартиры, как в'
             + ' указано в свидетельстве или выписке\n\n'
-            'или слово "Стоп" для отмены'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
         )
         await CallbackOnStart.next()
 
@@ -903,12 +909,12 @@ async def entering_description(message: Message, state: FSMContext):
 
 @dp.callback_query_handler(
     state=CallbackOnStart.Q8,
-    text=['yes_encumbrance', 'no_encumbrance', 'Отменить действие']
+    text=['yes_encumbrance', 'no_encumbrance', 'Отменить внесение объекта']
 )
 async def entering_encumbrance(callback: CallbackQuery, state: FSMContext):
     """Запись наличия обременения"""
-    if callback.data == 'Отменить действие':
-        await callback.message.answer(
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
             'Действие отменено'
         )
         await state.finish()
@@ -926,12 +932,12 @@ async def entering_encumbrance(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(
     state=CallbackOnStart.Q9,
-    text=['yes_children', 'no_children', 'Отменить действие']
+    text=['yes_children', 'no_children', 'Отменить внесение объекта']
 )
 async def entering_children(callback: CallbackQuery, state: FSMContext):
     """Запись наличия детей"""
-    if callback.data == 'Отменить действие':
-        await callback.message.answer(
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
             'Действие отменено'
         )
         await state.finish()
@@ -949,12 +955,12 @@ async def entering_children(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(
     state=CallbackOnStart.Q10,
-    text=['yes_mortage', 'no_mortage', 'Отменить действие']
+    text=['yes_mortage', 'no_mortage', 'Отменить внесение объекта']
 )
 async def entering_mortage(callback: CallbackQuery, state: FSMContext):
     """Запись возможности покупки в ипотеку"""
-    if callback.data == 'Отменить действие':
-        await callback.message.answer(
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
             'Действие отменено'
         )
         await state.finish()
@@ -1009,7 +1015,7 @@ async def entering_agency_name(message: Message, state: FSMContext):
         await state.update_data(agency_name=answer)
         await message.answer(
             '✏ Напишите своё имя\n\n'
-            'или слово "Стоп" для отмены'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
         )
         await CallbackOnStart.next()
 
@@ -1026,7 +1032,7 @@ async def entering_rieltor_name(message: Message, state: FSMContext):
 
         await state.update_data(rieltor_name=answer)
         await message.answer(
-            '✏ Загрузите до 6 фото квартиры (значок 📎)'
+            '✏ Загрузите до 6 фото квартиры\n\n'
         )
         await CallbackOnStart.Q14.set()
 
@@ -1098,7 +1104,8 @@ async def add_room(callback: CallbackQuery, state: FSMContext):
         'Приготовьтесь ответить на несколько вопросов про ваш объект '
         + 'недвижимости. 😏 Это займёт не более 2-3х минут.'
         + '\n'
-        + '\n✏ Напишите название улицы'
+        + '\n✏ Напишите название улицы\n\n'
+        + '🙅‍♂️ Для отмены действия напишите "Стоп"'
     )
     await RoomCallbackStates.R1.set()
 
@@ -1108,12 +1115,18 @@ async def enetering_rooms_street_name(
     message: Message, state: FSMContext
 ):
     """Запись названия улицы комнаты"""
-
-    await state.update_data(room_street_name=message.text.title())
-    await message.answer(
-        '✏ Напишите номер дома в формате 5, 5А или 91 корп.1'
-    )
-    await RoomCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(room_street_name=message.text.title())
+        await message.answer(
+            '✏ Напишите номер дома в формате 5, 5А или 91 корп.1\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.message_handler(state=RoomCallbackStates.R2)
@@ -1121,21 +1134,27 @@ async def enetering_rooms_house_number(
     message: Message, state: FSMContext
 ):
     """Запись номера дома"""
-    answer = message.text
-    if '"' in answer:
-        formatting_answer = answer.replace('"', '')
-        answer = formatting_answer
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text
+        if '"' in answer:
+            formatting_answer = answer.replace('"', '')
+            answer = formatting_answer
 
-    if ' ' in answer:
-        formatting_answer = answer.replace(' ', '')
-        answer = formatting_answer
+        if ' ' in answer:
+            formatting_answer = answer.replace(' ', '')
+            answer = formatting_answer
 
-    await state.update_data(room_house_number=answer.upper())
-    await message.answer(
-        '✏ Введите этаж комнаты',
-        reply_markup=keyboards.floor_number_or_count_keyboard('room_floor')
-    )
-    await RoomCallbackStates.next()
+        await state.update_data(room_house_number=answer.upper())
+        await message.answer(
+            '✏ Введите этаж комнаты',
+            reply_markup=keyboards.floor_number_or_count_keyboard('room_floor')
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.callback_query_handler(state=RoomCallbackStates.R3, text=[
@@ -1143,19 +1162,24 @@ async def enetering_rooms_house_number(
     '5_rfloor', '6_rfloor', '7_rfloor', '8_rfloor',
     '9_rfloor', '10_rfloor', '11_rfloor', '12_rfloor',
     '13_rfloor', '14_rfloor', '15_rfloor', '16_rfloor',
-    '17_rfloor', '18_rfloor',
+    '17_rfloor', '18_rfloor', 'Отменить внесение объекта',
 ])
 async def entering_room_floor(callback: CallbackQuery, state: FSMContext):
     """Ответ на кнопку выбора этажа комнаты"""
-
-    await state.update_data(room_floor=callback.data.removesuffix('_rfloor'))
-    await callback.message.edit_text(
-        '✏ Введите количество этажей',
-        reply_markup=keyboards.floor_number_or_count_keyboard(
-            object='room_house_floors'
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
         )
-    )
-    await RoomCallbackStates.next()
+        await state.finish()
+    else:
+        await state.update_data(room_floor=callback.data.removesuffix('_rfloor'))
+        await callback.message.edit_text(
+            '✏ Введите количество этажей',
+            reply_markup=keyboards.floor_number_or_count_keyboard(
+                object='room_house_floors'
+            )
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.callback_query_handler(state=RoomCallbackStates.R4, text=[
@@ -1163,176 +1187,230 @@ async def entering_room_floor(callback: CallbackQuery, state: FSMContext):
     '5_rfloors', '6_rfloors', '7_rfloors', '8_rfloors',
     '9_rfloors', '10_rfloors', '11_rfloors', '12_rfloors',
     '13_rfloors', '14_rfloors', '15_rfloors', '16_rfloors',
-    '17_rfloors', '18_rfloors',
+    '17_rfloors', '18_rfloors', 'Отменить внесение объекта',
 ])
 async def entering_room_floors(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на кнопку выбора этажности дома"""
-
-    await state.update_data(room_floors=callback.data.removesuffix('_rfloors'))
-    await callback.message.edit_text(
-        '✏ Введите площадь комнаты, как в указано в свидетельстве или выписке'
-    )
-    await RoomCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(room_floors=callback.data.removesuffix('_rfloors'))
+        await callback.message.edit_text(
+            '✏ Введите площадь комнаты, как в указано в свидетельстве или выписке\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.message_handler(state=RoomCallbackStates.R5)
 async def enetering_rooms_area(
     message: Message, state: FSMContext
 ):
-    try:
-        answer = message.text
-
-        if ',' in message.text:
-            formatting_string = message.text.replace(',', '.')
-            answer = float(formatting_string)
-        else:
-            answer = float(message.text)
-        await state.update_data(room_area=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('enter_price')
+            'Действие отменено'
         )
-        await RoomCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = message.text
 
-    except (ValueError) as e:
-        await RoomCallbackStates.R5.set()
-        await message.answer(
-            message_texts.on.get('area_entering_error')
-        )
-        logging.error(f'{e}')
+            if ',' in message.text:
+                formatting_string = message.text.replace(',', '.')
+                answer = float(formatting_string)
+            else:
+                answer = float(message.text)
+            await state.update_data(room_area=answer)
+            await message.answer(
+                message_texts.on.get('enter_price')
+            )
+            await RoomCallbackStates.next()
+
+        except (ValueError) as e:
+            await RoomCallbackStates.R5.set()
+            await message.answer(
+                message_texts.on.get('area_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=RoomCallbackStates.R6)
 async def entering_room_price(message: Message, state: FSMContext):
-    try:
-        answer = int(message.text)
-        await state.update_data(room_price=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.entering_description_text(category='комнаты')
+            'Действие отменено'
         )
-        await RoomCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = int(message.text)
+            await state.update_data(room_price=answer)
+            await message.answer(
+                message_texts.entering_description_text(category='комнаты')
+            )
+            await RoomCallbackStates.next()
 
-    except (ValueError) as e:
-        await RoomCallbackStates.R6.set()
-        await message.answer(
-            message_texts.on.get('price_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await RoomCallbackStates.R6.set()
+            await message.answer(
+                message_texts.on.get('price_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=RoomCallbackStates.R7)
 async def entering_room_description(message: Message, state: FSMContext):
-
-    answer = message.text
-    if len(message.text) <= 200:
-        await state.update_data(room_description=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            '✏ На недвижимости есть обременение?',
-            reply_markup=keyboards.yes_no_keyboard(item='room_encumbrance')
-            )
-        await RoomCallbackStates.next()
-    else:
-        await message.answer(
-            message_texts.character_limit(len(message.text))
+            'Действие отменено'
         )
-        logging.error('Превышение лимита знаков')
-        await RoomCallbackStates.R7.set()
+        await state.finish()
+    else:
+        answer = message.text
+        if len(message.text) <= 200:
+            await state.update_data(room_description=answer)
+            await message.answer(
+                '✏ На недвижимости есть обременение?',
+                reply_markup=keyboards.yes_no_keyboard(item='room_encumbrance')
+                )
+            await RoomCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.character_limit(len(message.text))
+            )
+            logging.error('Превышение лимита знаков')
+            await RoomCallbackStates.R7.set()
 
 
 @dp.callback_query_handler(
     state=RoomCallbackStates.R8,
-    text=['yes_room_encumbrance', 'no_room_encumbrance']
+    text=['yes_room_encumbrance', 'no_room_encumbrance', 'Отменить внесение объекта']
 )
 async def entering_room_encumbrance(
     callback: CallbackQuery, state: FSMContext
 ):
-
-    if callback.data == 'yes_room_encumbrance':
-        await state.update_data(room_encumbrance=True)
-    if callback.data == 'no_room_encumbrance':
-        await state.update_data(room_encumbrance=False)
-    await callback.message.edit_text(
-        '✏ В собственности есть дети?',
-        reply_markup=keyboards.yes_no_keyboard(item='room_children')
-    )
-    await RoomCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_room_encumbrance':
+            await state.update_data(room_encumbrance=True)
+        if callback.data == 'no_room_encumbrance':
+            await state.update_data(room_encumbrance=False)
+        await callback.message.edit_text(
+            '✏ В собственности есть дети?',
+            reply_markup=keyboards.yes_no_keyboard(item='room_children')
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=RoomCallbackStates.R9,
-    text=['yes_room_children', 'no_room_children']
+    text=['yes_room_children', 'no_room_children', 'Отменить внесение объекта']
 )
 async def entering_room_children(callback: CallbackQuery, state: FSMContext):
-
-    if callback.data == 'yes_room_children':
-        await state.update_data(room_children=True)
-    if callback.data == 'no_room_children':
-        await state.update_data(room_children=False)
-    await callback.message.edit_text(
-        '✏ Недвижимость возможно купить по иптоеке?',
-        reply_markup=keyboards.yes_no_keyboard(item='room_mortage')
-    )
-    await RoomCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_room_children':
+            await state.update_data(room_children=True)
+        if callback.data == 'no_room_children':
+            await state.update_data(room_children=False)
+        await callback.message.edit_text(
+            '✏ Недвижимость возможно купить по иптоеке?',
+            reply_markup=keyboards.yes_no_keyboard(item='room_mortage')
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=RoomCallbackStates.R10,
-    text=['yes_room_mortage', 'no_room_mortage']
+    text=['yes_room_mortage', 'no_room_mortage', 'Отменить внесение объекта']
 )
 async def entering_room_mortage(callback: CallbackQuery, state: FSMContext):
-
-    if callback.data == 'yes_room_mortage':
-        await state.update_data(room_mortage=True)
-    if callback.data == 'no_room_mortage':
-        await state.update_data(room_mortage=False)
-    await callback.message.edit_text(
-        message_texts.on.get('phone_number_entering_text')
-    )
-    await RoomCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_room_mortage':
+            await state.update_data(room_mortage=True)
+        if callback.data == 'no_room_mortage':
+            await state.update_data(room_mortage=False)
+        await callback.message.edit_text(
+            message_texts.on.get('phone_number_entering_text')
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.message_handler(state=RoomCallbackStates.R11)
 async def entering_room_phone_number(message: Message, state: FSMContext):
-
-    if re.match(r"^[0-9]+$", message.text):
-        await state.update_data(room_phone_number=message.text)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('agency_entering_text')
+            'Действие отменено'
         )
-        await RoomCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.phone_number_entering_error(
-                phone_number=message.text
+        if re.match(r"^[0-9]+$", message.text):
+            await state.update_data(room_phone_number=message.text)
+            await message.answer(
+                message_texts.on.get('agency_entering_text')
             )
-        )
-        logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
-        await RoomCallbackStates.R11.set()
+            await RoomCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.phone_number_entering_error(
+                    phone_number=message.text
+                )
+            )
+            logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
+            await RoomCallbackStates.R11.set()
 
 
 @dp.message_handler(state=RoomCallbackStates.R12)
 async def entering_room_agency_name(message: Message, state: FSMContext):
-
-    answer = message.text.title()
-    await state.update_data(room_agency_name=answer)
-    await message.answer(
-        '✏ Напишите своё имя'
-    )
-    await RoomCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(room_agency_name=answer)
+        await message.answer(
+            '✏ Напишите своё имя\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await RoomCallbackStates.next()
 
 
 @dp.message_handler(state=RoomCallbackStates.R13)
 async def entering_room_realtor_name(message: Message, state: FSMContext):
-
-    answer = message.text.title()
-    global flag
-    flag = False
-    await state.update_data(room_rieltor_name=answer)
-    await message.answer(
-        '✏ Загрузите до 6 фото квартиры (значок 📎)'
-    )
-    await RoomCallbackStates.R14.set()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        global flag
+        flag = False
+        await state.update_data(room_rieltor_name=answer)
+        await message.answer(
+            '✏ Загрузите до 6 фото квартиры\n\n'
+        )
+        await RoomCallbackStates.R14.set()
 
 
 @dp.message_handler(state=RoomCallbackStates.R14, content_types=ContentType.PHOTO)
@@ -1400,7 +1478,8 @@ async def add_house(callback: CallbackQuery, state: FSMContext):
         + '\n'
         + '\n✏ Укажите микрорайон расположения дома:'
         + ''
-        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.',
+        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.\n\n'
+        + '🙅‍♂️ Для отмены действия напишите "Стоп"',
         reply_markup=keyboards.microregion_keyboard()
     )
     await HouseCallbackStates.H1.set()
@@ -1414,68 +1493,98 @@ async def add_house(callback: CallbackQuery, state: FSMContext):
         'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
         'Кутлинка', 'Новонагаево', 'Актанышбаш',
         'Амзя', 'Карманово', 'Можары', 'Арлан', 'Зубовка',
-        'Кариево'
+        'Кариево', 'Отменить внесение объекта',
     ]
 )
 async def entering_house_street_name(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на кнопку выбора мирорайона"""
-
-    await state.update_data(house_microregion=callback.data)
-    await callback.message.edit_text(
-        '✏ Напишите название улицы и номер дома (номер - по желанию)'
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(house_microregion=callback.data)
+        await callback.message.edit_text(
+            '✏ Напишите название улицы (и номер - по желанию)\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.message_handler(state=HouseCallbackStates.H2)
 async def entering_house_purpose(message: Message, state: FSMContext):
     """Ответ на написание названия улицы"""
-
-    answer = message.text.title()
-    await state.update_data(house_street_name=answer)
-    await message.answer(
-        '✏ Укажите назначение участка',
-        reply_markup=keyboards.purpose_choise_keyboard()
-    )
-    await HouseCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(house_street_name=answer)
+        await message.answer(
+            '✏ Укажите назначение участка',
+            reply_markup=keyboards.purpose_choise_keyboard()
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
-    state=HouseCallbackStates.H3, text=['ИЖС', 'СНТ, ДНТ', 'ЛПХ']
+    state=HouseCallbackStates.H3, text=[
+        'ИЖС',
+        'СНТ, ДНТ',
+        'ЛПХ',
+        'Отменить внесение объекта'
+    ]
 )
 async def entering_house_finish(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на ввод назначения"""
-
-    await state.update_data(house_purpose=callback.data)
-    await callback.message.edit_text(
-        '✏ Это завершённое строительство',
-        reply_markup=keyboards.yes_no_keyboard(item='house_finish')
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(house_purpose=callback.data)
+        await callback.message.edit_text(
+            '✏ Это завершённое строительство',
+            reply_markup=keyboards.yes_no_keyboard(item='house_finish')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
-    state=HouseCallbackStates.H4, text=['yes_house_finish', 'no_house_finish']
+    state=HouseCallbackStates.H4, text=[
+        'yes_house_finish',
+        'no_house_finish',
+        'Отменить внесение объекта'
+    ]
 )
 async def entering_house_material(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на ввод завершённости строительства"""
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_finish':
+            await state.update_data(house_finish='Да')
+        if callback.data == 'no_house_finish':
+            await state.update_data(house_finish='Нет')
 
-    if callback.data == 'yes_house_finish':
-        await state.update_data(house_finish='Да')
-    if callback.data == 'no_house_finish':
-        await state.update_data(house_finish='Нет')
-
-    await callback.message.edit_text(
-        '✏ Укажите материал стен дома',
-        reply_markup=keyboards.material_choice_keyboard()
-    )
-    await HouseCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ Укажите материал стен дома',
+            reply_markup=keyboards.material_choice_keyboard()
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -1485,36 +1594,50 @@ async def entering_house_material(
         'Блок, облицованный кирпичом',
         'Дерево',
         'Дерево, облицованное кирпичом',
-        'Другое'
+        'Другое',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_gas(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(house_material=callback.data)
-    await callback.message.edit_text(
-        '✏ Укажите степень газификации дома',
-        reply_markup=keyboards.gaz_choise_keyboard()
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(house_material=callback.data)
+        await callback.message.edit_text(
+            '✏ Укажите степень газификации дома',
+            reply_markup=keyboards.gaz_choise_keyboard()
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H6, text=[
         'Газифицирован, дом отапливается',
         'Улица газифицировна, дом - нет',
-        'Улица не газифицирована'
+        'Улица не газифицирована',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_waters(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(house_gaz=callback.data)
-    await callback.message.edit_text(
-        '✏ В доме есть вода?',
-        reply_markup=keyboards.water_choice_keyboard()
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(house_gaz=callback.data)
+        await callback.message.edit_text(
+            '✏ В доме есть вода?',
+            reply_markup=keyboards.water_choice_keyboard()
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -1522,79 +1645,107 @@ async def entering_house_waters(
         'Водоснабжение центральное',
         'Колодец',
         'Вода по улице',
-        'Воды нет'
+        'Воды нет',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_sauna(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(house_water=callback.data)
-    await callback.message.edit_text(
-        '✏ На териитории участка/в доме есть баня или сауна',
-        reply_markup=keyboards.yes_no_keyboard(item='house_sauna')
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(house_water=callback.data)
+        await callback.message.edit_text(
+            '✏ На териитории участка/в доме есть баня или сауна',
+            reply_markup=keyboards.yes_no_keyboard(item='house_sauna')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H8, text=[
         'yes_house_sauna',
-        'no_house_sauna'
+        'no_house_sauna',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_garage(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_house_sauna':
-        await state.update_data(house_sauna='Есть')
-    if callback.data == 'no_house_sauna':
-        await state.update_data(house_sauna='Нет')
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_sauna':
+            await state.update_data(house_sauna='Есть')
+        if callback.data == 'no_house_sauna':
+            await state.update_data(house_sauna='Нет')
 
-    await callback.message.edit_text(
-        '✏ На териитории участка есть гараж?',
-        reply_markup=keyboards.yes_no_keyboard(item='house_garage')
-    )
-    await HouseCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ На териитории участка есть гараж?',
+            reply_markup=keyboards.yes_no_keyboard(item='house_garage')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H9, text=[
         'yes_house_garage',
-        'no_house_garage'
+        'no_house_garage',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_fence(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_house_garage':
-        await state.update_data(house_garage='Есть')
-    if callback.data == 'no_house_garage':
-        await state.update_data(house_garage='Нет')
-    await callback.message.edit_text(
-        '✏ Участок огорожен?',
-        reply_markup=keyboards.yes_no_keyboard(item='house_fence')
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_garage':
+            await state.update_data(house_garage='Есть')
+        if callback.data == 'no_house_garage':
+            await state.update_data(house_garage='Нет')
+        await callback.message.edit_text(
+            '✏ Участок огорожен?',
+            reply_markup=keyboards.yes_no_keyboard(item='house_fence')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H10, text=[
         'yes_house_fence',
-        'no_house_fence'
+        'no_house_fence',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_road(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_house_fence':
-        await state.update_data(house_fence='Есть')
-    if callback.data == 'no_house_fence':
-        await state.update_data(house_fence='Нет')
-    await callback.message.edit_text(
-        '✏ К участку есть проезд?',
-        reply_markup=keyboards.road_choice_keyboard()
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_fence':
+            await state.update_data(house_fence='Есть')
+        if callback.data == 'no_house_fence':
+            await state.update_data(house_fence='Нет')
+        await callback.message.edit_text(
+            '✏ К участку есть проезд?',
+            reply_markup=keyboards.road_choice_keyboard()
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -1602,199 +1753,281 @@ async def entering_house_road(
         'Асфальт',
         'Неплохая насыпная дорога',
         'Неплохая грунтовая дорога',
-        'Бездорожье, затрудняющее проезд'
+        'Бездорожье, затрудняющее проезд',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_house_area(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(house_road=callback.data)
-    await callback.message.edit_text(
-        '✏ Введите площадь дома, как в указано в свидетельстве или выписке. '
-        + 'Используйте разделитель "." для дробной и целой частей.'
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(house_road=callback.data)
+        await callback.message.edit_text(
+            '✏ Введите площадь дома, как в указано в свидетельстве или выписке. '
+            + 'Используйте разделитель "." для дробной и целой частей.\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.message_handler(state=HouseCallbackStates.H12)
 async def entering_house_land_area(message: Message, state: FSMContext):
-    try:
-        answer = message.text
-        if ',' in message.text:
-            formatting_string = message.text.replace(',', '.')
-            answer = float(formatting_string)
-        else:
-            answer = float(message.text)
-        await state.update_data(house_area=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            '✏ Введите площадь участка в сотках. '
-            + '(Цифру в документах разделите на 100) '
-            + 'Используйте разделитель "." для дробной и целой частей.'
+            'Действие отменено'
         )
-        await HouseCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = message.text
+            if ',' in message.text:
+                formatting_string = message.text.replace(',', '.')
+                answer = float(formatting_string)
+            else:
+                answer = float(message.text)
+            await state.update_data(house_area=answer)
+            await message.answer(
+                '✏ Введите площадь участка в сотках. '
+                + '(Цифру в документах разделите на 100) '
+                + 'Используйте разделитель "." для дробной и целой частей.\n\n'
+                + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+            )
+            await HouseCallbackStates.next()
 
-    except (ValueError) as e:
-        await HouseCallbackStates.H12.set()
-        await message.answer(
-            message_texts.on.get('area_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await HouseCallbackStates.H12.set()
+            await message.answer(
+                message_texts.on.get('area_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=HouseCallbackStates.H13)
 async def entering_house_price(message: Message, state: FSMContext):
-    try:
-        answer = message.text
-        if ',' in message.text:
-            formatting_string = message.text.replace(',', '.')
-            answer = float(formatting_string)
-        else:
-            answer = float(message.text)
-        await state.update_data(house_land_area=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('enter_price')
+            'Действие отменено'
         )
-        await HouseCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = message.text
+            if ',' in message.text:
+                formatting_string = message.text.replace(',', '.')
+                answer = float(formatting_string)
+            else:
+                answer = float(message.text)
+            await state.update_data(house_land_area=answer)
+            await message.answer(
+                message_texts.on.get('enter_price')
+            )
+            await HouseCallbackStates.next()
 
-    except (ValueError) as e:
-        await HouseCallbackStates.H13.set()
-        await message.answer(
-            message_texts.on.get('area_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await HouseCallbackStates.H13.set()
+            await message.answer(
+                message_texts.on.get('area_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=HouseCallbackStates.H14)
 async def entering_house_description(message: Message, state: FSMContext):
-    try:
-        answer = int(message.text)
-        await state.update_data(house_price=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.entering_description_text('дома')
+            'Действие отменено'
         )
-        await HouseCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = int(message.text)
+            await state.update_data(house_price=answer)
+            await message.answer(
+                message_texts.entering_description_text('дома')
+            )
+            await HouseCallbackStates.next()
 
-    except (ValueError) as e:
-        await HouseCallbackStates.H14.set()
-        await message.answer(
-            message_texts.on.get('price_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await HouseCallbackStates.H14.set()
+            await message.answer(
+                message_texts.on.get('price_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=HouseCallbackStates.H15)
 async def entering_house_encumbrance(
     message: Message, state: FSMContext
 ):
-    answer = message.text
-    if len(message.text) <= 200:
-        await state.update_data(house_description=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            '✏ На доме есть обременение?',
-            reply_markup=keyboards.yes_no_keyboard('house_encumbrance')
+            'Действие отменено'
         )
-        await HouseCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.character_limit(len(message.text))
-        )
-        logging.error('Превышение лимита знаков')
-        await HouseCallbackStates.H15.set()
+        answer = message.text
+        if len(message.text) <= 200:
+            await state.update_data(house_description=answer)
+            await message.answer(
+                '✏ На доме есть обременение?',
+                reply_markup=keyboards.yes_no_keyboard('house_encumbrance')
+            )
+            await HouseCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.character_limit(len(message.text))
+            )
+            logging.error('Превышение лимита знаков')
+            await HouseCallbackStates.H15.set()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H16,
-    text=['yes_house_encumbrance', 'no_house_encumbrance']
+    text=[
+        'yes_house_encumbrance',
+        'no_house_encumbrance',
+        'Отменить внесение объекта',
+    ]
 )
 async def entering_house_children(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_house_encumbrance':
-        await state.update_data(house_encumbrance=True)
-    if callback.data == 'no_house_encumbrance':
-        await state.update_data(house_encumbrance=False)
-    await callback.message.edit_text(
-        '✏ В собственности есть дети?',
-        reply_markup=keyboards.yes_no_keyboard('house_children')
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_encumbrance':
+            await state.update_data(house_encumbrance=True)
+        if callback.data == 'no_house_encumbrance':
+            await state.update_data(house_encumbrance=False)
+        await callback.message.edit_text(
+            '✏ В собственности есть дети?',
+            reply_markup=keyboards.yes_no_keyboard('house_children')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H17,
-    text=['yes_house_children', 'no_house_children']
+    text=[
+        'yes_house_children',
+        'no_house_children',
+        'Отменить внесение объекта',
+    ]
 )
 async def entering_house_mortage(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_house_children':
-        await state.update_data(house_children=True)
-    if callback.data == 'no_house_children':
-        await state.update_data(house_children=False)
-    await callback.message.edit_text(
-        '✏ Дом возможно купить по иптоеке?',
-        reply_markup=keyboards.yes_no_keyboard('house_mortage')
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_children':
+            await state.update_data(house_children=True)
+        if callback.data == 'no_house_children':
+            await state.update_data(house_children=False)
+        await callback.message.edit_text(
+            '✏ Дом возможно купить по иптоеке?',
+            reply_markup=keyboards.yes_no_keyboard('house_mortage')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H18,
-    text=['yes_house_mortage', 'no_house_mortage']
+    text=[
+        'yes_house_mortage',
+        'no_house_mortage',
+        'Отменить внесение объекта',
+    ]
 )
 async def entering_house_phone_number(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_house_mortage':
-        await state.update_data(house_mortage=True)
-    if callback.data == 'no_house_mortage':
-        await state.update_data(house_mortage=False)
-    await callback.message.edit_text(
-        message_texts.on.get('phone_number_entering_text')
-    )
-    await HouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_house_mortage':
+            await state.update_data(house_mortage=True)
+        if callback.data == 'no_house_mortage':
+            await state.update_data(house_mortage=False)
+        await callback.message.edit_text(
+            message_texts.on.get('phone_number_entering_text')
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.message_handler(state=HouseCallbackStates.H19)
 async def entering_house_agency_name(
     message: Message, state: FSMContext
 ):
-    if re.match(r"^[0-9]+$", message.text):
-        await state.update_data(house_phone_number=message.text)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('agency_entering_text')
+            'Действие отменено'
         )
-        await HouseCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.phone_number_entering_error(message.text)
-        )
-        logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
-        await HouseCallbackStates.H19.set()
+        if re.match(r"^[0-9]+$", message.text):
+            await state.update_data(house_phone_number=message.text)
+            await message.answer(
+                message_texts.on.get('agency_entering_text')
+            )
+            await HouseCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.phone_number_entering_error(message.text)
+            )
+            logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
+            await HouseCallbackStates.H19.set()
 
 
 @dp.message_handler(state=HouseCallbackStates.H20)
 async def entering_house_rieltor_name(
     message: Message, state: FSMContext
 ):
-    answer = message.text.title()
-    await state.update_data(house_agency_name=answer)
-    await message.answer(
-        '✏ Напишите своё имя'
-    )
-    await HouseCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(house_agency_name=answer)
+        await message.answer(
+            '✏ Напишите своё имя\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await HouseCallbackStates.next()
 
 
 @dp.message_handler(state=HouseCallbackStates.H21)
 async def house_entering_rieltor_name(message: Message, state: FSMContext):
-    answer = message.text.title()
-    global flag
-    flag = False
-    await state.update_data(house_rieltor_name=answer)
-    await message.answer(
-        '✏ Загрузите до 6 фото дома (значок 📎)'
-    )
-    await HouseCallbackStates.H22.set()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        global flag
+        flag = False
+        await state.update_data(house_rieltor_name=answer)
+        await message.answer(
+            '✏ Загрузите до 6 фото дома'
+        )
+        await HouseCallbackStates.H22.set()
 
 
 @dp.message_handler(state=HouseCallbackStates.H22, content_types=ContentType.PHOTO)
@@ -1809,7 +2042,6 @@ async def house_report_photo(message: Message):
         await HouseCallbackStates.H23.set()
     else:
         images[key].append(message.photo[-1].file_id)
-
 
 
 @dp.message_handler(state=HouseCallbackStates.H23)
@@ -1863,7 +2095,8 @@ async def add_townhouse(callback: CallbackQuery, state: FSMContext):
         + '\n'
         + '\n✏ Укажите микрорайон расположения таунхауса:'
         + ''
-        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.',
+        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.\n\n'
+        + '🙅‍♂️ Для отмены действия напишите "Стоп"',
         reply_markup=keyboards.microregion_keyboard()
     )
     await TownHouseCallbackStates.T1.set()
@@ -1877,70 +2110,96 @@ async def add_townhouse(callback: CallbackQuery, state: FSMContext):
         'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
         'Кутлинка', 'Новонагаево', 'Актанышбаш',
         'Амзя', 'Карманово', 'Можары', 'Арлан', 'Зубовка',
-        'Кариево'
+        'Кариево', 'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_street_name(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на кнопку выбора мирорайона"""
-
-    await state.update_data(townhouse_microregion=callback.data)
-    await callback.message.edit_text(
-        '✏ Напишите название улицы и номер дома (номер - по желанию)'
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(townhouse_microregion=callback.data)
+        await callback.message.edit_text(
+            '✏ Напишите название улицы (и номер дома - по желанию)\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T2)
 async def entering_townhouse_purpose(message: Message, state: FSMContext):
     """Ответ на написание названия улицы"""
-
-    answer = message.text.title()
-    await state.update_data(townhouse_street_name=answer)
-    await message.answer(
-        '✏ Укажите назначение участка',
-        reply_markup=keyboards.purpose_choise_keyboard()
-    )
-    await TownHouseCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(townhouse_street_name=answer)
+        await message.answer(
+            '✏ Укажите назначение участка',
+            reply_markup=keyboards.purpose_choise_keyboard()
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
-    state=TownHouseCallbackStates.T3, text=['ИЖС', 'СНТ, ДНТ', 'ЛПХ']
+    state=TownHouseCallbackStates.T3, text=[
+        'ИЖС',
+        'СНТ, ДНТ',
+        'ЛПХ',
+        'Отменить внесение объекта'
+    ]
 )
 async def entering_townhouse_finish(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на ввод назначения"""
-
-    await state.update_data(townhouse_purpose=callback.data)
-    await callback.message.edit_text(
-        '✏ Это завершённое строительство',
-        reply_markup=keyboards.yes_no_keyboard(item='townhouse_finish')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(townhouse_purpose=callback.data)
+        await callback.message.edit_text(
+            '✏ Это завершённое строительство',
+            reply_markup=keyboards.yes_no_keyboard(item='townhouse_finish')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T4, text=[
-        'yes_townhouse_finish', 'no_townhouse_finish'
+        'yes_townhouse_finish', 'no_townhouse_finish', 'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_material(
     callback: CallbackQuery, state: FSMContext
 ):
     """Ответ на ввод завершённости строительства"""
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_finish':
+            await state.update_data(townhouse_finish='Да')
+        if callback.data == 'no_townhouse_finish':
+            await state.update_data(townhouse_finish='Нет')
 
-    if callback.data == 'yes_townhouse_finish':
-        await state.update_data(townhouse_finish='Да')
-    if callback.data == 'no_townhouse_finish':
-        await state.update_data(townhouse_finish='Нет')
-
-    await callback.message.edit_text(
-        '✏ Укажите материал стен',
-        reply_markup=keyboards.material_choice_keyboard()
-    )
-    await TownHouseCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ Укажите материал стен',
+            reply_markup=keyboards.material_choice_keyboard()
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -1950,36 +2209,50 @@ async def entering_townhouse_material(
         'Блок, облицованный кирпичом',
         'Дерево',
         'Дерево, облицованное кирпичом',
-        'Другое'
+        'Другое',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_gas(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(townhouse_material=callback.data)
-    await callback.message.edit_text(
-        '✏ Укажите степень газификации',
-        reply_markup=keyboards.gaz_choise_keyboard()
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(townhouse_material=callback.data)
+        await callback.message.edit_text(
+            '✏ Укажите степень газификации',
+            reply_markup=keyboards.gaz_choise_keyboard()
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T6, text=[
         'Газифицирован, дом отапливается',
         'Улица газифицировна, дом - нет',
-        'Улица не газифицирована'
+        'Улица не газифицирована',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_waters(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(townhouse_gaz=callback.data)
-    await callback.message.edit_text(
-        '✏ В таунхаус проведена вода?',
-        reply_markup=keyboards.water_choice_keyboard()
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(townhouse_gaz=callback.data)
+        await callback.message.edit_text(
+            '✏ В таунхаус проведена вода?',
+            reply_markup=keyboards.water_choice_keyboard()
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -1987,79 +2260,107 @@ async def entering_townhouse_waters(
         'Водоснабжение центральное',
         'Колодец',
         'Вода по улице',
-        'Воды нет'
+        'Воды нет',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_sauna(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(townhouse_water=callback.data)
-    await callback.message.edit_text(
-        '✏ На териитории участка или внутри есть баня или сауна',
-        reply_markup=keyboards.yes_no_keyboard(item='townhouse_sauna')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(townhouse_water=callback.data)
+        await callback.message.edit_text(
+            '✏ На териитории участка или внутри есть баня или сауна',
+            reply_markup=keyboards.yes_no_keyboard(item='townhouse_sauna')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T8, text=[
         'yes_townhouse_sauna',
-        'no_townhouse_sauna'
+        'no_townhouse_sauna',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_garage(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_townhouse_sauna':
-        await state.update_data(townhouse_sauna='Есть')
-    if callback.data == 'no_townhouse_sauna':
-        await state.update_data(townhouse_sauna='Нет')
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_sauna':
+            await state.update_data(townhouse_sauna='Есть')
+        if callback.data == 'no_townhouse_sauna':
+            await state.update_data(townhouse_sauna='Нет')
 
-    await callback.message.edit_text(
-        '✏ На териитории участка есть гараж?',
-        reply_markup=keyboards.yes_no_keyboard(item='townhouse_garage')
-    )
-    await TownHouseCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ На териитории участка есть гараж?',
+            reply_markup=keyboards.yes_no_keyboard(item='townhouse_garage')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T9, text=[
         'yes_townhouse_garage',
-        'no_townhouse_garage'
+        'no_townhouse_garage',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_fence(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_townhouse_garage':
-        await state.update_data(townhouse_garage='Есть')
-    if callback.data == 'no_townhouse_garage':
-        await state.update_data(townhouse_garage='Нет')
-    await callback.message.edit_text(
-        '✏ Участок огорожен?',
-        reply_markup=keyboards.yes_no_keyboard(item='townhouse_fence')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_garage':
+            await state.update_data(townhouse_garage='Есть')
+        if callback.data == 'no_townhouse_garage':
+            await state.update_data(townhouse_garage='Нет')
+        await callback.message.edit_text(
+            '✏ Участок огорожен?',
+            reply_markup=keyboards.yes_no_keyboard(item='townhouse_fence')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T10, text=[
         'yes_townhouse_fence',
-        'no_townhouse_fence'
+        'no_townhouse_fence',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_road(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_townhouse_fence':
-        await state.update_data(townhouse_fence='Есть')
-    if callback.data == 'no_townhouse_fence':
-        await state.update_data(townhouse_fence='Нет')
-    await callback.message.edit_text(
-        '✏ К участку есть проезд?',
-        reply_markup=keyboards.road_choice_keyboard()
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_fence':
+            await state.update_data(townhouse_fence='Есть')
+        if callback.data == 'no_townhouse_fence':
+            await state.update_data(townhouse_fence='Нет')
+        await callback.message.edit_text(
+            '✏ К участку есть проезд?',
+            reply_markup=keyboards.road_choice_keyboard()
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -2067,198 +2368,279 @@ async def entering_townhouse_road(
         'Асфальт',
         'Неплохая насыпная дорога',
         'Неплохая грунтовая дорога',
-        'Бездорожье, затрудняющее проезд'
+        'Бездорожье, затрудняющее проезд',
+        'Отменить внесение объекта',
     ]
 )
 async def entering_townhouse_area(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(townhouse_road=callback.data)
-    await callback.message.edit_text(
-        message_texts.on.get('area_entering_text')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(townhouse_road=callback.data)
+        await callback.message.edit_text(
+            message_texts.on.get('area_entering_text')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T12)
 async def entering_townhouse_land_area(message: Message, state: FSMContext):
-    try:
-        answer = message.text
-        if ',' in message.text:
-            formatting_string = message.text.replace(',', '.')
-            answer = float(formatting_string)
-        else:
-            answer = float(message.text)
-        await state.update_data(townhouse_area=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            '✏ Введите площадь участка в сотках. '
-            + '(Цифру в документах разделите на 100) '
-            + 'Используйте разделитель "." для дробной и целой частей.'
+            'Действие отменено'
         )
-        await TownHouseCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = message.text
+            if ',' in message.text:
+                formatting_string = message.text.replace(',', '.')
+                answer = float(formatting_string)
+            else:
+                answer = float(message.text)
+            await state.update_data(townhouse_area=answer)
+            await message.answer(
+                '✏ Введите площадь участка в сотках. '
+                + '(Цифру в документах разделите на 100) '
+                + 'Используйте разделитель "." для дробной и целой частей.\n\n'
+                + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+            )
+            await TownHouseCallbackStates.next()
 
-    except (ValueError) as e:
-        await TownHouseCallbackStates.T12.set()
-        await message.answer(
-            message_texts.on.get('area_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await TownHouseCallbackStates.T12.set()
+            await message.answer(
+                message_texts.on.get('area_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T13)
 async def entering_townhouse_price(message: Message, state: FSMContext):
-    try:
-        answer = message.text
-        if ',' in message.text:
-            formatting_string = message.text.replace(',', '.')
-            answer = float(formatting_string)
-        else:
-            answer = float(message.text)
-        await state.update_data(townhouse_land_area=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('enter_price')
+            'Действие отменено'
         )
-        await TownHouseCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = message.text
+            if ',' in message.text:
+                formatting_string = message.text.replace(',', '.')
+                answer = float(formatting_string)
+            else:
+                answer = float(message.text)
+            await state.update_data(townhouse_land_area=answer)
+            await message.answer(
+                message_texts.on.get('enter_price')
+            )
+            await TownHouseCallbackStates.next()
 
-    except (ValueError) as e:
-        await TownHouseCallbackStates.T13.set()
-        await message.answer(
-            message_texts.on.get('area_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await TownHouseCallbackStates.T13.set()
+            await message.answer(
+                message_texts.on.get('area_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T14)
 async def entering_townhouse_description(message: Message, state: FSMContext):
-    try:
-        answer = int(message.text)
-        await state.update_data(townhouse_price=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.entering_description_text('таунхауса')
+            'Действие отменено'
         )
-        await TownHouseCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = int(message.text)
+            await state.update_data(townhouse_price=answer)
+            await message.answer(
+                message_texts.entering_description_text('таунхауса')
+            )
+            await TownHouseCallbackStates.next()
 
-    except (ValueError) as e:
-        await TownHouseCallbackStates.T14.set()
-        await message.answer(
-            message_texts.on.get('price_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await TownHouseCallbackStates.T14.set()
+            await message.answer(
+                message_texts.on.get('price_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T15)
 async def entering_townhouse_encumbrance(
     message: Message, state: FSMContext
 ):
-    answer = message.text
-    if len(message.text) <= 200:
-        await state.update_data(townhouse_description=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            '✏ На таунхаусе есть обременение?',
-            reply_markup=keyboards.yes_no_keyboard('townhouse_encumbrance')
+            'Действие отменено'
         )
-        await TownHouseCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.character_limit(len(message.text))
-        )
-        logging.error('Превышение лимита знаков')
-        await TownHouseCallbackStates.T15.set()
+        answer = message.text
+        if len(message.text) <= 200:
+            await state.update_data(townhouse_description=answer)
+            await message.answer(
+                '✏ На таунхаусе есть обременение?',
+                reply_markup=keyboards.yes_no_keyboard('townhouse_encumbrance')
+            )
+            await TownHouseCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.character_limit(len(message.text))
+            )
+            logging.error('Превышение лимита знаков')
+            await TownHouseCallbackStates.T15.set()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T16,
-    text=['yes_townhouse_encumbrance', 'no_townhouse_encumbrance']
+    text=[
+        'yes_townhouse_encumbrance',
+        'no_townhouse_encumbrance',
+        'Отменить внесение объекта',
+    ]
 )
 async def entering_townhouse_children(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_townhouse_encumbrance':
-        await state.update_data(townhouse_encumbrance=True)
-    if callback.data == 'no_townhouse_encumbrance':
-        await state.update_data(townhouse_encumbrance=False)
-    await callback.message.edit_text(
-        '✏ В собственности есть дети?',
-        reply_markup=keyboards.yes_no_keyboard('townhouse_children')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_encumbrance':
+            await state.update_data(townhouse_encumbrance=True)
+        if callback.data == 'no_townhouse_encumbrance':
+            await state.update_data(townhouse_encumbrance=False)
+        await callback.message.edit_text(
+            '✏ В собственности есть дети?',
+            reply_markup=keyboards.yes_no_keyboard('townhouse_children')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T17,
-    text=['yes_townhouse_children', 'no_townhouse_children']
+    text=[
+        'yes_townhouse_children',
+        'no_townhouse_children',
+        'Отменить внесение объекта',
+    ]
 )
 async def entering_townhouse_mortage(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_townhouse_children':
-        await state.update_data(townhouse_children=True)
-    if callback.data == 'no_townhouse_children':
-        await state.update_data(townhouse_children=False)
-    await callback.message.edit_text(
-        '✏ Таунхаусы возможно купить по иптоеке?',
-        reply_markup=keyboards.yes_no_keyboard('townhouse_mortage')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_children':
+            await state.update_data(townhouse_children=True)
+        if callback.data == 'no_townhouse_children':
+            await state.update_data(townhouse_children=False)
+        await callback.message.edit_text(
+            '✏ Таунхаусы возможно купить по иптоеке?',
+            reply_markup=keyboards.yes_no_keyboard('townhouse_mortage')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T18,
-    text=['yes_townhouse_mortage', 'no_townhouse_mortage']
+    text=[
+        'yes_townhouse_mortage',
+        'no_townhouse_mortage',
+        'Отменить внесение объекта',
+    ]
 )
 async def entering_townhouse_phone_number(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_townhouse_mortage':
-        await state.update_data(townhouse_mortage=True)
-    if callback.data == 'no_townhouse_mortage':
-        await state.update_data(townhouse_mortage=False)
-    await callback.message.edit_text(
-        message_texts.on.get('phone_number_entering_text')
-    )
-    await TownHouseCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_townhouse_mortage':
+            await state.update_data(townhouse_mortage=True)
+        if callback.data == 'no_townhouse_mortage':
+            await state.update_data(townhouse_mortage=False)
+        await callback.message.edit_text(
+            message_texts.on.get('phone_number_entering_text')
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T19)
 async def entering_townhouse_agency_name(
     message: Message, state: FSMContext
 ):
-    if re.match(r"^[0-9]+$", message.text):
-        await state.update_data(townhouse_phone_number=message.text)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('agency_entering_text')
+            'Действие отменено'
         )
-        await TownHouseCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.phone_number_entering_error(message.text)
-        )
-        logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
-        await TownHouseCallbackStates.T19.set()
+        if re.match(r"^[0-9]+$", message.text):
+            await state.update_data(townhouse_phone_number=message.text)
+            await message.answer(
+                message_texts.on.get('agency_entering_text')
+            )
+            await TownHouseCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.phone_number_entering_error(message.text)
+            )
+            logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
+            await TownHouseCallbackStates.T19.set()
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T20)
 async def entering_townhouse_rieltor_name(
     message: Message, state: FSMContext
 ):
-    answer = message.text.title()
-    await state.update_data(townhouse_agency_name=answer)
-    await message.answer(
-        '✏ Напишите своё имя'
-    )
-    await TownHouseCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(townhouse_agency_name=answer)
+        await message.answer(
+            '✏ Напишите своё имя\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await TownHouseCallbackStates.next()
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T21)
 async def townhous_upload_photos(message: Message, state: FSMContext):
-    answer = message.text.title()
-    global flag
-    flag = False
-    await state.update_data(townhouse_rieltor_name=answer)
-    await message.answer(
-        '✏ Загрузите до 6 фото таунхауса (значок 📎)'
-    )
-    await TownHouseCallbackStates.T22.set()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        global flag
+        flag = False
+        await state.update_data(townhouse_rieltor_name=answer)
+        await message.answer(
+            '✏ Загрузите до 6 фото таунхауса'
+        )
+        await TownHouseCallbackStates.T22.set()
 
 
 @dp.message_handler(state=TownHouseCallbackStates.T22, content_types=ContentType.PHOTO)
@@ -2326,7 +2708,8 @@ async def add_land(callback: CallbackQuery, state: FSMContext):
         + '\n'
         + '\n✏ Укажите микрорайон расположения участка:'
         + ''
-        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.',
+        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.\n\n'
+        + '🙅‍♂️ Для отмены действия напишите "Стоп"',
         reply_markup=keyboards.microregion_keyboard()
     )
     await LandCallbackStates.L1.set()
@@ -2340,165 +2723,225 @@ async def add_land(callback: CallbackQuery, state: FSMContext):
         'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
         'Кутлинка', 'Новонагаево', 'Актанышбаш',
         'Амзя', 'Карманово', 'Можары', 'Арлан', 'Зубовка',
-        'Кариево'
+        'Кариево', 'Отменить внесение объекта'
     ]
 )
 async def entering_land_street_name(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(land_microregion=callback.data)
-    await callback.message.edit_text(
-        '✏ Напишите название улицы'
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(land_microregion=callback.data)
+        await callback.message.edit_text(
+            '✏ Напишите название улицы\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await LandCallbackStates.next()
 
 
 @dp.message_handler(state=LandCallbackStates.L2)
 async def entering_land_number(message: Message, state: FSMContext):
-
-    answer = message.text.title()
-    await state.update_data(land_street_name=answer)
-    await message.answer(
-        '✏ Напишите номер участка',
-    )
-    await LandCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(land_street_name=answer)
+        await message.answer(
+            '✏ Напишите номер участка\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"',
+        )
+        await LandCallbackStates.next()
 
 
 @dp.message_handler(state=LandCallbackStates.L3)
 async def entering_land_purpose(message: Message, state: FSMContext):
-    answer = message.text
-    if '"' in answer:
-        formatting_answer = answer.replace('"', '')
-        answer = formatting_answer
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text
+        if '"' in answer:
+            formatting_answer = answer.replace('"', '')
+            answer = formatting_answer
 
-    if ' ' in answer:
-        formatting_answer = answer.replace(' ', '')
-        answer = formatting_answer
+        if ' ' in answer:
+            formatting_answer = answer.replace(' ', '')
+            answer = formatting_answer
 
-    answer = answer.upper()
-    await state.update_data(land_number_name=answer)
-    await message.answer(
-        '✏ Укажите назначение участка',
-        reply_markup=keyboards.purpose_choise_keyboard()
-    )
-    await LandCallbackStates.next()
+        answer = answer.upper()
+        await state.update_data(land_number_name=answer)
+        await message.answer(
+            '✏ Укажите назначение участка',
+            reply_markup=keyboards.purpose_choise_keyboard()
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L4,
-    text=['ИЖС', 'СНТ, ДНТ', 'ЛПХ']
+    text=['ИЖС', 'СНТ, ДНТ', 'ЛПХ', 'Отменить внесение объекта']
 )
 async def entering_land_gas(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(land_purpose=callback.data)
-    await callback.message.edit_text(
-        '✏ По улице проходит газ',
-        reply_markup=keyboards.yes_no_keyboard('land_gaz')
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(land_purpose=callback.data)
+        await callback.message.edit_text(
+            '✏ По улице проходит газ',
+            reply_markup=keyboards.yes_no_keyboard('land_gaz')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L5, text=[
         'yes_land_gaz',
-        'no_land_gaz'
+        'no_land_gaz',
+        'Отменить внесение объекта'
     ]
 )
 async def entering_land_waters(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_gaz':
-        await state.update_data(land_gaz='Да')
-    if callback.data == 'no_land_gaz':
-        await state.update_data(land_gaz='Нет')
-    await callback.message.edit_text(
-        '✏ По улице проходит вода?',
-        reply_markup=keyboards.yes_no_keyboard('land_water')
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_gaz':
+            await state.update_data(land_gaz='Да')
+        if callback.data == 'no_land_gaz':
+            await state.update_data(land_gaz='Нет')
+        await callback.message.edit_text(
+            '✏ По улице проходит вода?',
+            reply_markup=keyboards.yes_no_keyboard('land_water')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L6, text=[
         'yes_land_water',
-        'no_land_water'
+        'no_land_water',
+        'Отменить внесение объекта'
     ]
 )
 async def entering_land_sauna(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_water':
-        await state.update_data(land_water='Да')
-    if callback.data == 'no_land_water':
-        await state.update_data(land_water='Нет')
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_water':
+            await state.update_data(land_water='Да')
+        if callback.data == 'no_land_water':
+            await state.update_data(land_water='Нет')
 
-    await callback.message.edit_text(
-        '✏ На териитории участка баня или сауна',
-        reply_markup=keyboards.yes_no_keyboard(item='land_sauna')
-    )
-    await LandCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ На териитории участка баня или сауна',
+            reply_markup=keyboards.yes_no_keyboard(item='land_sauna')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L7, text=[
         'yes_land_sauna',
-        'no_land_sauna'
+        'no_land_sauna',
+        'Отменить внесение объекта'
     ]
 )
 async def entering_land_garage(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_sauna':
-        await state.update_data(land_sauna='Есть')
-    if callback.data == 'no_land_sauna':
-        await state.update_data(land_sauna='Нет')
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_sauna':
+            await state.update_data(land_sauna='Есть')
+        if callback.data == 'no_land_sauna':
+            await state.update_data(land_sauna='Нет')
 
-    await callback.message.edit_text(
-        '✏ На териитории участка есть гараж?',
-        reply_markup=keyboards.yes_no_keyboard(item='land_garage')
-    )
-    await LandCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ На териитории участка есть гараж?',
+            reply_markup=keyboards.yes_no_keyboard(item='land_garage')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L8, text=[
         'yes_land_garage',
-        'no_land_garage'
+        'no_land_garage',
+        'Отменить внесение объекта'
     ]
 )
 async def entering_land_fence(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_garage':
-        await state.update_data(land_garage='Есть')
-    if callback.data == 'no_land_garage':
-        await state.update_data(land_garage='Нет')
-    await callback.message.edit_text(
-        '✏ Участок огорожен?',
-        reply_markup=keyboards.yes_no_keyboard(item='land_fence')
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_garage':
+            await state.update_data(land_garage='Есть')
+        if callback.data == 'no_land_garage':
+            await state.update_data(land_garage='Нет')
+        await callback.message.edit_text(
+            '✏ Участок огорожен?',
+            reply_markup=keyboards.yes_no_keyboard(item='land_fence')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L9, text=[
         'yes_land_fence',
-        'no_land_fence'
+        'no_land_fence',
+        'Отменить внесение объекта'
     ]
 )
 async def entering_land_road(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_fence':
-        await state.update_data(land_fence='Есть')
-    if callback.data == 'no_land_fence':
-        await state.update_data(land_fence='Нет')
-    await callback.message.edit_text(
-        '✏ К участку есть проезд?',
-        reply_markup=keyboards.road_choice_keyboard()
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_fence':
+            await state.update_data(land_fence='Есть')
+        if callback.data == 'no_land_fence':
+            await state.update_data(land_fence='Нет')
+        await callback.message.edit_text(
+            '✏ К участку есть проезд?',
+            reply_markup=keyboards.road_choice_keyboard()
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
@@ -2506,176 +2949,250 @@ async def entering_land_road(
         'Асфальт',
         'Неплохая насыпная дорога',
         'Неплохая грунтовая дорога',
-        'Бездорожье, затрудняющее проезд'
+        'Бездорожье, затрудняющее проезд',
+        'Отменить внесение объекта'
     ]
 )
 async def entering_land_area(
     callback: CallbackQuery, state: FSMContext
 ):
-    await state.update_data(land_road=callback.data)
-    await callback.message.edit_text(
-        '✏ Введите площадь участка в сотках. '
-        + '(Цифру в документах разделите на 100) '
-        + 'Используйте разделитель "." для дробной и целой частей.'
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(land_road=callback.data)
+        await callback.message.edit_text(
+            '✏ Введите площадь участка в сотках. '
+            + '(Цифру в документах разделите на 100) '
+            + 'Используйте разделитель "." для дробной и целой частей.'
+        )
+        await LandCallbackStates.next()
 
 
 @dp.message_handler(state=LandCallbackStates.L11)
 async def entering_land_price(message: Message, state: FSMContext):
-    try:
-        answer = message.text
-        if ',' in message.text:
-            formatting_string = message.text.replace(',', '.')
-            answer = float(formatting_string)
-        else:
-            answer = float(message.text)
-        await state.update_data(land_area=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('enter_price')
+            'Действие отменено'
         )
-        await LandCallbackStates.next()
-    except (ValueError) as e:
-        await LandCallbackStates.L11.set()
-        await message.answer(
-            message_texts.on.get('area_entering_error')
-        )
-        logging.error(f'{e}')
+        await state.finish()
+    else:
+        try:
+            answer = message.text
+            if ',' in message.text:
+                formatting_string = message.text.replace(',', '.')
+                answer = float(formatting_string)
+            else:
+                answer = float(message.text)
+            await state.update_data(land_area=answer)
+            await message.answer(
+                message_texts.on.get('enter_price')
+            )
+            await LandCallbackStates.next()
+        except (ValueError) as e:
+            await LandCallbackStates.L11.set()
+            await message.answer(
+                message_texts.on.get('area_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=LandCallbackStates.L12)
 async def entering_land_description(message: Message, state: FSMContext):
-    try:
-        answer = int(message.text)
-        await state.update_data(land_price=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.entering_description_text('участка')
+            'Действие отменено'
         )
-        await LandCallbackStates.next()
+        await state.finish()
+    else:
+        try:
+            answer = int(message.text)
+            await state.update_data(land_price=answer)
+            await message.answer(
+                message_texts.entering_description_text('участка')
+            )
+            await LandCallbackStates.next()
 
-    except (ValueError) as e:
-        await LandCallbackStates.L12.set()
-        await message.answer(
-            message_texts.on.get('price_entering_error')
-        )
-        logging.error(f'{e}')
+        except (ValueError) as e:
+            await LandCallbackStates.L12.set()
+            await message.answer(
+                message_texts.on.get('price_entering_error')
+            )
+            logging.error(f'{e}')
 
 
 @dp.message_handler(state=LandCallbackStates.L13)
 async def entering_land_encumbrance(
     message: Message, state: FSMContext
 ):
-    answer = message.text
-    if len(message.text) <= 200:
-        await state.update_data(land_description=answer)
+    if message.text == 'Стоп':
         await message.answer(
-            '✏ На объекте есть обременение?',
-            reply_markup=keyboards.yes_no_keyboard('land_encumbrance')
+            'Действие отменено'
         )
-        await LandCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.character_limit(len(message.text))
-        )
-        logging.error('Превышение лимита знаков')
-        await LandCallbackStates.L13.set()
+        answer = message.text
+        if len(message.text) <= 200:
+            await state.update_data(land_description=answer)
+            await message.answer(
+                '✏ На объекте есть обременение?',
+                reply_markup=keyboards.yes_no_keyboard('land_encumbrance')
+            )
+            await LandCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.character_limit(len(message.text))
+            )
+            logging.error('Превышение лимита знаков')
+            await LandCallbackStates.L13.set()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L14,
-    text=['yes_land_encumbrance', 'no_land_encumbrance']
+    text=[
+        'yes_land_encumbrance',
+        'no_land_encumbrance',
+        'Отменить внесение объекта'
+    ]
 )
 async def entering_land_children(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_encumbrance':
-        await state.update_data(land_encumbrance=True)
-    if callback.data == 'no_land_encumbrance':
-        await state.update_data(land_encumbrance=False)
-    await callback.message.edit_text(
-        '✏ В собственности есть дети?',
-        reply_markup=keyboards.yes_no_keyboard('land_children')
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_encumbrance':
+            await state.update_data(land_encumbrance=True)
+        if callback.data == 'no_land_encumbrance':
+            await state.update_data(land_encumbrance=False)
+        await callback.message.edit_text(
+            '✏ В собственности есть дети?',
+            reply_markup=keyboards.yes_no_keyboard('land_children')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L15,
-    text=['yes_land_children', 'no_land_children']
+    text=[
+        'yes_land_children',
+        'no_land_children',
+        'Отменить внесение объекта'
+    ]
 )
 async def entering_land_mortage(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_children':
-        await state.update_data(land_children=True)
-    if callback.data == 'no_land_children':
-        await state.update_data(land_children=False)
-    await callback.message.edit_text(
-        '✏ Дом возможно купить по иптоеке?',
-        reply_markup=keyboards.yes_no_keyboard('land_mortage')
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_children':
+            await state.update_data(land_children=True)
+        if callback.data == 'no_land_children':
+            await state.update_data(land_children=False)
+        await callback.message.edit_text(
+            '✏ Дом возможно купить по иптоеке?',
+            reply_markup=keyboards.yes_no_keyboard('land_mortage')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L16,
-    text=['yes_land_mortage', 'no_land_mortage']
+    text=[
+        'yes_land_mortage',
+        'no_land_mortage',
+        'Отменить внесение объекта'
+    ]
 )
 async def entering_land_phone_number(
     callback: CallbackQuery, state: FSMContext
 ):
-    if callback.data == 'yes_land_mortage':
-        await state.update_data(land_mortage=True)
-    if callback.data == 'no_land_mortage':
-        await state.update_data(land_mortage=False)
-    await callback.message.edit_text(
-        message_texts.on.get('phone_number_entering_text')
-    )
-    await LandCallbackStates.next()
+    if callback.data == 'Отменить внесение объекта':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        if callback.data == 'yes_land_mortage':
+            await state.update_data(land_mortage=True)
+        if callback.data == 'no_land_mortage':
+            await state.update_data(land_mortage=False)
+        await callback.message.edit_text(
+            message_texts.on.get('phone_number_entering_text')
+        )
+        await LandCallbackStates.next()
 
 
 @dp.message_handler(state=LandCallbackStates.L17)
 async def entering_land_agency_name(
     message: Message, state: FSMContext
 ):
-    if re.match(r"^[0-9]+$", message.text):
-        await state.update_data(land_phone_number=message.text)
+    if message.text == 'Стоп':
         await message.answer(
-            message_texts.on.get('agency_entering_text')
+            'Действие отменено'
         )
-        await LandCallbackStates.next()
+        await state.finish()
     else:
-        await message.answer(
-            message_texts.phone_number_entering_error(message.text)
-        )
-        logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
-        await LandCallbackStates.L17.set()
+        if re.match(r"^[0-9]+$", message.text):
+            await state.update_data(land_phone_number=message.text)
+            await message.answer(
+                message_texts.on.get('agency_entering_text')
+            )
+            await LandCallbackStates.next()
+        else:
+            await message.answer(
+                message_texts.phone_number_entering_error(message.text)
+            )
+            logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
+            await LandCallbackStates.L17.set()
 
 
 @dp.message_handler(state=LandCallbackStates.L18)
 async def entering_land_rieltor_name(
     message: Message, state: FSMContext
 ):
-    answer = message.text.title()
-    await state.update_data(land_agency_name=answer)
-    await message.answer(
-        '✏ Напишите своё имя'
-    )
-    await LandCallbackStates.next()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        await state.update_data(land_agency_name=answer)
+        await message.answer(
+            '✏ Напишите своё имя\n\n'
+            + '🙅‍♂️ Для отмены действия напишите "Стоп"'
+        )
+        await LandCallbackStates.next()
 
 
 @dp.message_handler(state=LandCallbackStates.L19)
 async def land_photo_upload(
     message: Message, state: FSMContext
 ):
-    answer = message.text.title()
-    global flag
-    flag = False
-    await state.update_data(land_rieltor_name=answer)
-    await message.answer(
-        '✏ Загрузите до 6 фото участка (значок 📎). '
-    )
-    await LandCallbackStates.L20.set()
+    if message.text == 'Стоп':
+        await message.answer(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        answer = message.text.title()
+        global flag
+        flag = False
+        await state.update_data(land_rieltor_name=answer)
+        await message.answer(
+            '✏ Загрузите до 6 фото участка. '
+        )
+        await LandCallbackStates.L20.set()
 
 
 @dp.message_handler(state=LandCallbackStates.L20, content_types=ContentType.PHOTO)
@@ -2824,16 +3341,22 @@ async def edit_price(message: Message):
 async def entering_new_price(
     callback: CallbackQuery, state: FSMContext
 ):
-    category = callback.data.split()[1]
-    id = callback.data.split()[0]
-    await state.update_data(searching_category=category)
-    await state.update_data(searching_id=id)
+    if callback.data == 'Отмена':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        category = callback.data.split()[1]
+        id = callback.data.split()[0]
+        await state.update_data(searching_category=category)
+        await state.update_data(searching_id=id)
 
-    await callback.message.edit_text(
-        '✏ Напишите новую цену.\n\nПолную цену цифрами, '
-        + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.'
-    )
-    await PriceEditCallbackStates.next()
+        await callback.message.edit_text(
+            '✏ Напишите новую цену.\n\nПолную цену цифрами, '
+            + 'не сокращая, и без знаков Р, р, ₽, руб. и т.п.'
+        )
+        await PriceEditCallbackStates.next()
 
 
 @dp.message_handler(state=PriceEditCallbackStates.EP3)
@@ -2862,9 +3385,9 @@ async def price_updating_process(
         await PriceEditCallbackStates.EP3.set()
 
 
-@dp.callback_query_handler(text=['Отменить действие'])
+@dp.callback_query_handler(text=['Отменить внесение объекта'])
 async def cancel(callback: CallbackQuery, state=FSMContext):
     await state.finish()
-    await callback.message.answer(
+    await callback.message.edit_text(
         'Действие отменено'
     )

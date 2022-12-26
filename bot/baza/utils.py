@@ -86,7 +86,7 @@ class keyboards():
                     buttons[i], callback_data=f'{buttons[i]}'
                     )
             )
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -106,7 +106,7 @@ class keyboards():
         ) for i in range(1, 6)]
         keyboard.row(*buttons)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -135,7 +135,7 @@ class keyboards():
             ) for i in range(j * 6, 6 + 6 * j)]
             keyboard.row(*buttons)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -153,7 +153,7 @@ class keyboards():
         )
         keyboard.row(key_1, key_2)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -185,7 +185,7 @@ class keyboards():
         keyboard.row(buttons[12], buttons[13], buttons[14])
         keyboard.row(buttons[15], buttons[16])
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -199,7 +199,7 @@ class keyboards():
 
         keyboard.row(key_1, key_2, key_3)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -224,7 +224,7 @@ class keyboards():
         keyboard.row(key_3)
         keyboard.row(key_4)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -250,7 +250,7 @@ class keyboards():
         for i in range(0, len(buttons)):
             keyboard.row(buttons[i])
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -277,7 +277,7 @@ class keyboards():
         keyboard.row(key_3)
         keyboard.row(key_4)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -306,7 +306,7 @@ class keyboards():
         keyboard.row(key_3)
         keyboard.row(key_4)
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -370,7 +370,7 @@ class keyboards():
                 )
             )
 
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отмена'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
@@ -395,7 +395,7 @@ class keyboards():
 
     def cancel_button():
         keyboard = InlineKeyboardMarkup()
-        cancel_button = 'Отменить действие'
+        cancel_button = 'Отменить внесение объекта'
         keyboard
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
