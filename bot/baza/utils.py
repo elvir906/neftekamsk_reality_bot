@@ -4,6 +4,34 @@ from aiogram.types import InlineKeyboardMarkup
 from aiogram.types.inline_keyboard import InlineKeyboardButton
 from baza.models import Apartment, House, Land, Room, TownHouse
 
+object_microregions = [
+    'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
+    'Марино', 'Телевышка', 'Лесная поляна',
+    'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
+    'Кутлинка', 'Новонагаево', 'Актанышбаш',
+    'Амзя', 'Карманово', 'Можары', 'Арлан',
+    'Зубовка', 'Кариево'
+]
+
+object_city_microregions_for_checking = [
+    'НФ БГУ', '2 шк', '3 шк', '4 шк', 'Белем',
+    '6 шк', '7 шк', '8 шк', '9 шк', '10 шк',
+    '11 шк', '12 шк', '13 шк', '14 шк', '16 шк',
+    '17 шк', 'Башкирская гимназия',
+    '✅ НФ БГУ', '✅ 2 шк', '✅ 3 шк', '✅ 4 шк', '✅ Белем',
+    '✅ 6 шк', '✅ 7 шк', '✅ 8 шк', '✅ 9 шк', '✅ 10 шк',
+    '✅ 11 шк', '✅ 12 шк', '✅ 13 шк', '✅ 14 шк', '✅ 16 шк',
+    '✅ 17 шк', '✅ Башкирская гимназия', 'Отменить внесение покупателя',
+    'Подтвердить выбор'
+]
+
+object_city_microregions = [
+    'НФ БГУ', '2 шк', '3 шк', '4 шк', 'Белем',
+    '6 шк', '7 шк', '8 шк', '9 шк', '10 шк',
+    '11 шк', '12 шк', '13 шк', '14 шк', '16 шк',
+    '17 шк', 'Башкирская гимназия'
+]
+
 
 class keyboards():
     def get_category_keyboard():
@@ -143,7 +171,6 @@ class keyboards():
 
     def yes_no_keyboard(item: str):
         """Генерация клавиатуры на да/нет по различным вопросам"""
-
         keyboard = InlineKeyboardMarkup()
         key_1 = InlineKeyboardButton(
             text='Да', callback_data=f'yes_{item}'
@@ -152,30 +179,24 @@ class keyboards():
             text='Нет', callback_data=f'no_{item}'
         )
         keyboard.row(key_1, key_2)
-
-        cancel_button = 'Отменить внесение объекта'
+        if item == 'initial_payment':
+            cancel_button = 'Отменить внесение клиента'
+        else:
+            cancel_button = 'Отменить внесение объекта'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )
         return keyboard
 
-    def microregion_keyboard():
+    def microregion_keyboard(item: str):
         """Генерация клавиатуры на выбор микрорайона"""
 
         keyboard = InlineKeyboardMarkup()
-        microregion_buttons_text = [
-            'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
-            'Марино', 'Телевышка', 'Лесная поляна',
-            'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
-            'Кутлинка', 'Новонагаево', 'Актанышбаш',
-            'Амзя', 'Карманово', 'Можары', 'Арлан',
-            'Зубовка', 'Кариево'
-        ]
         buttons = [
             InlineKeyboardButton(
-                text=microregion_buttons_text[i],
-                callback_data=microregion_buttons_text[i]
-                ) for i in range(0, len(microregion_buttons_text) - 1)
+                text=object_microregions[i],
+                callback_data=object_microregions[i]
+                ) for i in range(0, len(object_microregions) - 1)
         ]
         keyboard.row(buttons[0], buttons[2])
         keyboard.row(buttons[7], buttons[5])
@@ -185,9 +206,39 @@ class keyboards():
         keyboard.row(buttons[12], buttons[13], buttons[14])
         keyboard.row(buttons[15], buttons[16])
 
-        cancel_button = 'Отменить внесение объекта'
+        if item == 'object':
+            cancel_button = 'Отменить внесение объекта'
+        if item == 'subject':
+            cancel_button = 'Отменить внесение покупателя'
         keyboard.row(
-            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+            InlineKeyboardButton(text=cancel_button, callback_data=cancel_button)
+        )
+        return keyboard
+
+    def city_microregion_keyboard(checked_buttons: list):
+        """Генерация клавиатуры на выбор микрорайона города"""
+
+        keyboard = InlineKeyboardMarkup()
+
+        new_kbd_btns = ['✅ ' + x if x in checked_buttons else x for x in object_city_microregions]
+
+        buttons = [
+            InlineKeyboardButton(
+                text=new_kbd_btns[i],
+                callback_data=new_kbd_btns[i]
+                ) for i in range(0, len(new_kbd_btns) - 1)
+        ]
+
+        keyboard.add(*buttons)
+
+        accept_button = 'Подтвердить выбор'
+        keyboard.row(
+            InlineKeyboardButton(text=accept_button, callback_data=accept_button)
+        )
+
+        cancel_button = 'Отменить внесение покупателя'
+        keyboard.row(
+            InlineKeyboardButton(text=cancel_button, callback_data=cancel_button)
         )
         return keyboard
 
@@ -396,7 +447,59 @@ class keyboards():
     def cancel_button():
         keyboard = InlineKeyboardMarkup()
         cancel_button = 'Отменить внесение объекта'
-        keyboard
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
+        return keyboard
+
+    def buyer_searching_category():
+        keyboard = InlineKeyboardMarkup()
+        buttons_text = [
+            '1к.кв.',
+            '2к.кв.',
+            '3к.кв.',
+            '4к.кв.',
+            '5к.кв.',
+            'Комнаты, КГТ',
+            'Дома',
+            'Таунхаусы',
+            'Участки'
+        ]
+        buttons = [InlineKeyboardButton(
+            text=buttons_text[i],
+            callback_data='поиск_' + buttons_text[i]
+        ) for i in range(0, 5)]
+        keyboard.row(*buttons)
+
+        buttons = [InlineKeyboardButton(
+            text=buttons_text[i],
+            callback_data='поиск_' + buttons_text[i]
+        ) for i in range(5, len(buttons_text))]
+        keyboard.row(*buttons)
+
+        cancel_button = 'Отменить внесение покупателя'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
+        return keyboard
+
+    def buyer_source_choice_keyboard():
+        keyboard = InlineKeyboardMarkup()
+        buttons_text = [
+            'Наличные деньги',
+            'Ипотечный кредит',
+            'Только мат. кап.',
+            'Др. сертификаты',
+        ]
+        buttons = [
+            InlineKeyboardButton(
+                text=buttons_text[i],
+                callback_data=buttons_text[i]
+            ) for i in range(0, len(buttons_text))
+        ]
+        keyboard.row(*buttons)
+
+        cancel_button = 'Отменить внесение покупателя'
         keyboard.row(
             InlineKeyboardButton(cancel_button, callback_data=cancel_button)
         )

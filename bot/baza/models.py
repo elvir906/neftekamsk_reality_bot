@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from datetime import date
 
 
 class Individuals(models.Model):
@@ -529,3 +530,58 @@ class Land(models.Model):
     class Meta:
         verbose_name = 'Участок'
         verbose_name_plural = 'Участки'
+
+
+class Buyer(models.Model):
+    user_id = models.BigIntegerField(
+        verbose_name='id'
+    )
+    phone_number = models.CharField(
+        max_length=13,
+        verbose_name='Номер телефона'
+    )
+    buyer_name = category = models.CharField(
+        max_length=200,
+        verbose_name='Имя покупателя',
+        default='Не спросил'
+    )
+    category = models.CharField(
+        max_length=100,
+        verbose_name='Категория поиска',
+    )
+    room_quantity = models.IntegerField(
+        verbose_name='Количество комнат',
+        default=10
+    )
+    last_floor = models.BooleanField(
+        default=True,
+        verbose_name='Рассм. кр. этажи'
+    )
+    limit = models.BigIntegerField(
+        verbose_name='Предел суммы'
+    )
+    source = models.CharField(
+        max_length=100,
+        verbose_name='Источник оплаты',
+    )
+    initial_payment = models.BooleanField(
+        default=True,
+        verbose_name='наличие ПВ'
+    )
+    microregion = models.CharField(
+        max_length=100,
+        verbose_name='микрорайон поиска',
+    )
+    comment = models.TextField(
+        max_length='500',
+        help_text='Описание',
+        verbose_name='Описание'
+    )
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата внесения'
+    )
+
+    class Meta:
+        verbose_name = 'Покупатель'
+        verbose_name_plural = 'Покупатели'

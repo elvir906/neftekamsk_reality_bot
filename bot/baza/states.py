@@ -136,3 +136,19 @@ class DeleteCallbackStates(StatesGroup):
     D2 = State()
     D3 = State()
     D4 = State()
+
+
+class Buyer(StatesGroup):
+    buyer_name = State()
+    buyer_phone_number = State()
+    category = State()
+    microregion = State()
+    city_microregion = State()
+    room_quantity = State()
+    last_floor = State()
+    limit = State()
+    source = State()
+    initial_payment = State()
+    none_initial_payment_microregion = State()
+    comment = State()
+    base_update = State()

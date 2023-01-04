@@ -13,11 +13,13 @@ from baza.answer_messages import message_texts
 from baza.db_worker import DB_Worker
 from baza.models import (Apartment, House, Individuals, Land, Room,
                          Subscriptors, TownHouse)
-from baza.states import (CallbackOnStart, DeleteCallbackStates,
+from baza.states import (Buyer, CallbackOnStart, DeleteCallbackStates,
                          HouseCallbackStates, LandCallbackStates,
                          PriceEditCallbackStates, RoomCallbackStates,
                          TownHouseCallbackStates)
-from baza.utils import Output, keyboards
+from baza.utils import (Output, keyboards,
+                        object_city_microregions_for_checking,
+                        object_microregions)
 from decouple import config
 from django.core.management.base import BaseCommand
 
@@ -1478,23 +1480,15 @@ async def add_house(callback: CallbackQuery, state: FSMContext):
         + '\n'
         + '\n✏ Укажите микрорайон расположения дома:'
         + ''
-        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.\n\n'
-        + '🙅‍♂️ Чтобы отменить внесение объекта, напишите "Стоп"',
-        reply_markup=keyboards.microregion_keyboard()
+        + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.',
+        reply_markup=keyboards.microregion_keyboard('object')
     )
     await HouseCallbackStates.H1.set()
 
 
 @dp.callback_query_handler(
     state=HouseCallbackStates.H1,
-    text=[
-        'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
-        'Марино', 'Телевышка', 'Лесная поляна',
-        'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
-        'Кутлинка', 'Новонагаево', 'Актанышбаш',
-        'Амзя', 'Карманово', 'Можары', 'Арлан', 'Зубовка',
-        'Кариево', 'Отменить внесение объекта',
-    ]
+    text=object_microregions.append('Отменить внесение объекта')
 )
 async def entering_house_street_name(
     callback: CallbackQuery, state: FSMContext
@@ -2097,21 +2091,14 @@ async def add_townhouse(callback: CallbackQuery, state: FSMContext):
         + ''
         + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.\n\n'
         + '🙅‍♂️ Чтобы отменить внесение объекта, напишите "Стоп"',
-        reply_markup=keyboards.microregion_keyboard()
+        reply_markup=keyboards.microregion_keyboard('object')
     )
     await TownHouseCallbackStates.T1.set()
 
 
 @dp.callback_query_handler(
     state=TownHouseCallbackStates.T1,
-    text=[
-        'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
-        'Марино', 'Телевышка', 'Лесная поляна',
-        'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
-        'Кутлинка', 'Новонагаево', 'Актанышбаш',
-        'Амзя', 'Карманово', 'Можары', 'Арлан', 'Зубовка',
-        'Кариево', 'Отменить внесение объекта',
-    ]
+    text=object_microregions.append('Отменить внесение объекта')
 )
 async def entering_townhouse_street_name(
     callback: CallbackQuery, state: FSMContext
@@ -2710,21 +2697,14 @@ async def add_land(callback: CallbackQuery, state: FSMContext):
         + ''
         + '\n✏ Если нужного микрорайона/села/деревни нет, напишите @davletelvir, добавлю.\n\n'
         + '🙅‍♂️ Чтобы отменить внесение объекта, напишите "Стоп"',
-        reply_markup=keyboards.microregion_keyboard()
+        reply_markup=keyboards.microregion_keyboard('object')
     )
     await LandCallbackStates.L1.set()
 
 
 @dp.callback_query_handler(
     state=LandCallbackStates.L1,
-    text=[
-        'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
-        'Марино', 'Телевышка', 'Лесная поляна',
-        'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
-        'Кутлинка', 'Новонагаево', 'Актанышбаш',
-        'Амзя', 'Карманово', 'Можары', 'Арлан', 'Зубовка',
-        'Кариево', 'Отменить внесение объекта'
-    ]
+    text=object_microregions.append('Отменить внесение объекта')
 )
 async def entering_land_street_name(
     callback: CallbackQuery, state: FSMContext
@@ -3386,8 +3366,251 @@ async def price_updating_process(
 
 
 @dp.callback_query_handler(text=['Отменить внесение объекта'])
-async def cancel(callback: CallbackQuery, state=FSMContext):
+async def cancel(callback: CallbackQuery, state: FSMContext):
     await state.finish()
-    await callback.message.edit_text(
-        'Действие отменено'
+    await callback.message.edit_text('Действие отменено')
+
+
+# -----------------------------------------------------------------------------
+# -------------------ДОБАВЛЕНИЕ КЛИЕНТА----------------------------------------
+# -----------------------------------------------------------------------------
+
+
+@dp.message_handler(commands=['addbuyer'])
+async def add_buyer(message: Message):
+    await message.answer(
+        'Внимание! Данные о покупателе будут видны только вам, а так же '
+        + 'вашему руководителю будут видны имя, категория поиска, лимит, '
+        + 'источник оплаты, дата внесения\n\n'
+        '✏ Введите имя покупателя\n\n'
+        + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
     )
+    await Buyer.buyer_phone_number.set()
+
+
+@dp.message_handler(state=Buyer.buyer_phone_number)
+async def add_phone_number(message: Message, state: FSMContext):
+    if message.text == 'Стоп':
+        await message.answer('Действие по добавлению покупателя отменено')
+        await state.finish()
+    else:
+        await state.update_data(buyer_name=message.text)
+        await message.answer(
+            message_texts.on.get('buyer_phone_number_entering_text')
+        )
+        await Buyer.category.set()
+
+
+@dp.message_handler(state=Buyer.category)
+async def add_category(message: Message, state: FSMContext):
+    if message.text == 'Стоп':
+        await message.answer('Действие по добавлению покупателя отменено')
+        await state.finish()
+    else:
+        if re.match(r"^[0-9]+$", message.text):
+            await state.update_data(buyer_phone_number=message.text)
+            await message.answer(
+                'В какой категории покупатель осуществляет поиск?',
+                reply_markup=keyboards.buyer_searching_category()
+            )
+            await Buyer.limit.set()
+        else:
+            await message.answer(
+                message_texts.phone_number_entering_error(
+                    phone_number=message.text
+                )
+            )
+            logging.error(f'🧐 Ошибка при вводе номера телефона {message.text}')
+            await Buyer.category.set()
+
+
+@dp.callback_query_handler(
+    state=Buyer.limit,
+    text=[
+        'поиск_1к.кв.',
+        'поиск_2к.кв.',
+        'поиск_3к.кв.',
+        'поиск_4к.кв.',
+        'поиск_5к.кв.',
+        'поиск_Комнаты, КГТ',
+        'поиск_Дома',
+        'поиск_Таунхаусы',
+        'поиск_Участки',
+        'Отменить внесение покупателя'
+    ]
+)
+async def add_limit(callback: CallbackQuery, state: FSMContext):
+    answer = callback.data
+    if answer == 'Отменить внесение покупателя':
+        await callback.message.edit_text(
+            'Действие по добавлению покупателя отменено'
+        )
+        await state.finish()
+    else:
+        if answer in [
+            'поиск_1к.кв.', 'поиск_2к.кв.', 'поиск_3к.кв.',
+            'поиск_4к.кв.', 'поиск_5к.кв.'
+        ]:
+            await state.update_data(buyer_search_category=answer[6])
+        elif answer == 'поиск_Комнаты, КГТ':
+            await state.update_data(buyer_search_category='room')
+        elif answer == 'поиск_Дома':
+            await state.update_data(buyer_search_category='house')
+        elif answer == 'поиск_Таунхаусы':
+            await state.update_data(buyer_search_category='townhouse')
+        else:
+            await state.update_data(buyer_search_category='поиск_Участки')
+        await callback.message.edit_text(
+            '✏ Каков предел суммы покупателя?\n\n'
+            + 'Важно! Напишите полное число со всеми нулями\n\n'
+            + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
+        )
+        await Buyer.source.set()
+
+
+@dp.message_handler(state=Buyer.source)
+async def add_source(message: Message, state: FSMContext):
+    if message.text == 'Стоп':
+        await message.answer('Действие по добавлению покупателя отменено')
+        await state.finish()
+    else:
+        try:
+            await state.update_data(buyer_limit=int(message.text))
+            await message.answer(
+                '✏ Выберите форму расчёта покупателя',
+                reply_markup=keyboards.buyer_source_choice_keyboard()
+            )
+            await Buyer.microregion.set()
+        except (ValueError) as e:
+            await Buyer.source.set()
+            await bot.send_sticker(
+                chat_id=message.from_user.id,
+                sticker=r"CAACAgIAAxkBAAEG_-ZjqHE6DzrO1BV48O2huiQ8kDVIIQACYwAD29t-AAGMnQU950KD5ywE"
+            )
+            await message.answer(
+                message_texts.on.get('price_entering_error')
+            )
+            logging.error(f'{e}')
+
+
+checked = []
+
+
+@dp.callback_query_handler(
+    state=Buyer.microregion,
+    text=[
+        'Ипотечный кредит',
+        'Наличные деньги',
+        'Только мат. кап.',
+        'Др. сертификаты',
+        'Отменить внесение покупателя'
+        ]
+)
+async def add_microregion(callback: CallbackQuery, state: FSMContext):
+    if callback.data == 'Отменить внесение покупателя':
+        await callback.message.edit_text(
+            'Действие по добавлению покупателя отменено'
+        )
+        await state.finish()
+    else:
+        data = await state.get_data()
+
+        if data.get(
+            'buyer_search_category'
+        ) in ['1', '2', '3', '4', '5'] or data.get(
+            'buyer_search_category'
+        ) == 'room':
+            await callback.message.edit_text(
+                '✏ Укажите микрорайон поиска',
+                reply_markup=keyboards.city_microregion_keyboard(checked_buttons=[])
+            )
+            global checked
+            checked = []
+            await Buyer.city_microregion.set()
+        if data.get(
+            'buyer_search_category'
+        ) in ['house', 'townhouse', 'land']:
+            await callback.message.edit_text(
+                '✏ Укажите микрорайон поиска',
+                reply_markup=keyboards.microregion_keyboard('subject')
+            )
+
+
+@dp.callback_query_handler(
+    state=Buyer.city_microregion,
+    text=object_city_microregions_for_checking
+)
+async def city_microreg_checkbox(callback: CallbackQuery, state: FSMContext):
+    answer = callback.data
+    if answer == 'Отменить внесение покупателя':
+        await callback.message.edit_text(
+            'Действие по добавлению покупателя отменено'
+        )
+        await state.finish()
+    else:
+        if answer == 'Подтвердить выбор':
+            await callback.message.edit_text(
+                'Подтверждено'
+            )
+            await Buyer.base_update.set()
+        else:
+            if '✅' in answer:
+                checked.remove(answer.removeprefix('✅ '))
+            else:
+                checked.append(answer)
+            await callback.message.edit_text(
+                '✏ Укажите микрорайон поиска',
+                reply_markup=keyboards.city_microregion_keyboard(checked_buttons=checked)
+            )
+            await Buyer.city_microregion.set()
+
+
+@dp.callback_query_handler(
+    state=Buyer.initial_payment,
+    text='dgdg'
+)
+async def add_inital_payment(callback: CallbackQuery, state: FSMContext):
+    answer = callback.data
+    if answer == 'Отменить внесение покупателя':
+        await callback.message.edit_text(
+            'Действие по добавлению покупателя отменено'
+        )
+        await state.finish()
+    else:
+        await state.update_data(buyer_source=answer)
+        if answer == 'Ипотечный кредит':
+            await callback.message.edit_text(
+                    '✏ У покупателя есть ПВ?',
+                    reply_markup=keyboards.yes_no_keyboard('initial_payment')
+            )
+        await Buyer.microregion.set()
+
+
+@dp.callback_query_handler(
+    state=Buyer.comment,
+    text=object_microregions.append('Отменить внесение покупателя')
+)
+async def add_comment(callback: CallbackQuery, state: FSMContext):
+    if callback.data == 'Отменить внесение покупателя':
+        await callback.message.answer(
+            'Действие по добавлению покупателя отменено'
+        )
+        await state.finish()
+    else:
+        data = await state.get_data()
+        if not data.get('buyer_microregion'):
+            await state.update_data(buyer_microregion=callback.data)
+        await callback.message.edit_text(
+            '✏ Добавьте необходимый комментраий к покупателю'
+            + '(банк, что продаёт, сумму ПВ и т.п.)\n\n'
+            + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
+        )
+        await Buyer.base_update.set()
+
+
+@dp.message_handler(state=Buyer.base_update)
+async def base_update(message: Message, state: FSMContext):
+    await state.update_data(buyer_comment=message.text)
+    data = await state.get_data()
+    print(data)
+    await state.finish()

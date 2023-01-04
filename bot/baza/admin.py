@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (Apartment, House, Individuals, Land, Room, Subscriptors,
-                     TownHouse)
+                     TownHouse, Buyer)
 
 
 class ApartmentAdmin(admin.ModelAdmin):
@@ -148,6 +148,23 @@ class IndividualsAdmin(admin.ModelAdmin):
     )
 
 
+class BuyerAdmin(admin.ModelAdmin):
+    list_display = (
+        'user_id',
+        'phone_number',
+        'buyer_name',
+        'category',
+        'room_quantity',
+        'last_floor',
+        'limit',
+        'source',
+        'initial_payment',
+        'microregion',
+        'comment',
+        'pub_date',
+    )
+
+
 admin.site.register(Apartment, ApartmentAdmin)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(House, HouseAdmin)
@@ -155,3 +172,4 @@ admin.site.register(TownHouse, TownHouseAdmin)
 admin.site.register(Land, LandAdmin)
 admin.site.register(Subscriptors, SubscriptorsAdmin)
 admin.site.register(Individuals, IndividualsAdmin)
+admin.site.register(Buyer, BuyerAdmin)
