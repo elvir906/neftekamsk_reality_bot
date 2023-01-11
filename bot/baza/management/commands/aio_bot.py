@@ -3638,11 +3638,19 @@ async def base_update(message: Message, state: FSMContext):
                 )
             else:
                 await message.answer('\n'.join(message_texts.buyer_adding_result_text(data=data)))
+                
+                class_name = Output.str_to_class(data.get('buyer_search_category').title())
+                queryset = class_name.objects.filter(price__lte=data.get('buyer_limit'))
+                if queryset.exists():
+                    for item in queryset:
+                        await bot.send_message(
+                            chat_id=item.user_id, text=f'У пользователя '
+                            + f'@{message.from_user.username} есть возможный '
+                            + 'покупатель на твой объект '
+                            + f'{Output.search_category_output(data.get("buyer_search_category"))}, ул.{item.street_name}'
+                        )
+
             await state.finish()
-
-
-            # СЮДА ДОБАВИТЬ КОД НА СОВПАДЕНИЕ И ОТПРАВКУ ССОБЩЕНИЯ
-
         else:
             await message.answer(
                 'Комментарий по клиенту не должен превышать 500 знаков. Отредактируйте и попробуйте заново.'
@@ -3857,5 +3865,3 @@ async def searching_for_buyer(
                         album.attach_photo(photo_id)
                 await callback.message.answer_media_group(media=album)
         await state.finish()
-
-        print(buyer_category.get('category'), buyer_limit.get('limit'))

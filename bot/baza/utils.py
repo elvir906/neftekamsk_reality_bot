@@ -516,7 +516,7 @@ class keyboards():
             text=buttons_text[i],
             callback_data='поиск_' + buttons_text[i]
         ) for i in range(5, len(buttons_text))]
-        keyboard.row(*buttons)
+        keyboard.add(*buttons)
 
         cancel_button = 'Отменить внесение покупателя'
         keyboard.row(
@@ -538,7 +538,9 @@ class keyboards():
                 callback_data=buttons_text[i]
             ) for i in range(0, len(buttons_text))
         ]
-        keyboard.row(*buttons)
+        for i in range(0, len(buttons)):
+            keyboard.row(buttons[i])
+        # keyboard.add(*buttons)
 
         cancel_button = 'Отменить внесение покупателя'
         keyboard.row(
@@ -605,3 +607,5 @@ class Output():
             return 'Таунхаус'
         if item == 'land':
             return 'Участок'
+        if item == 'apartment':
+            return 'Квартира'
