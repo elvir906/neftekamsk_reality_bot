@@ -144,11 +144,16 @@ class Buyer(StatesGroup):
     category = State()
     microregion = State()
     city_microregion = State()
-    room_quantity = State()
-    last_floor = State()
+    country_microregion = State()
     limit = State()
     source = State()
-    initial_payment = State()
-    none_initial_payment_microregion = State()
     comment = State()
     base_update = State()
+
+
+class DeleteBuyer(StatesGroup):
+    step2 = State()
+
+
+class ObjForBuyer(StatesGroup):
+    step2 = State()

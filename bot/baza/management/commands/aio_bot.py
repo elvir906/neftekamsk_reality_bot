@@ -11,14 +11,15 @@ from aiogram.types import (CallbackQuery, ContentType, InputFile, MediaGroup,
                            Message)
 from baza.answer_messages import message_texts
 from baza.db_worker import DB_Worker
-from baza.models import (Apartment, House, Individuals, Land, Room,
+from baza.models import (Apartment, Buyer as BuyerDB, House, Individuals, Land, Room,
                          Subscriptors, TownHouse)
 from baza.states import (Buyer, CallbackOnStart, DeleteCallbackStates,
                          HouseCallbackStates, LandCallbackStates,
                          PriceEditCallbackStates, RoomCallbackStates,
-                         TownHouseCallbackStates)
+                         TownHouseCallbackStates, DeleteBuyer, ObjForBuyer)
 from baza.utils import (Output, keyboards,
                         object_city_microregions_for_checking,
+                        object_country_microregions_for_checking,
                         object_microregions)
 from decouple import config
 from django.core.management.base import BaseCommand
@@ -42,7 +43,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         executor.start_polling(dp, skip_updates=True)
 
-
+# -----------------------------------------------------------------------------
+# --------------------УДАЛЕНИЕ ОБЪЕКТА-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['deleteobject'])
 async def delete_object(message: Message):
     user_id = message.from_user.id
@@ -100,14 +103,18 @@ async def deleting_object(
             )
             await DeleteCallbackStates.D2.set()
 
-
+# -----------------------------------------------------------------------------
+# --------------------агидель-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['aqidel'])
 async def history_is_lie(message: Message):
     await message.answer(
         message_texts.aqidel()
     )
 
-
+# -----------------------------------------------------------------------------
+# --------------------старт-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
     await bot.send_sticker(
@@ -116,7 +123,9 @@ async def start(message: Message):
             )
     await message.answer(message_texts.on.get('start'))
 
-
+# -----------------------------------------------------------------------------
+# --------------------About-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['about'])
 async def about(message: Message):
     await message.answer(
@@ -124,11 +133,17 @@ async def about(message: Message):
         parse_mode='markdown'
     )
 
-
+# -----------------------------------------------------------------------------
+# --------------------СТАИСТИКА-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['getstatistics'])
 async def get_statistics(message: Message):
     await message.answer(message_texts.on.get('statistics'))
 
+
+# -----------------------------------------------------------------------------
+# --------------------ПОИСК ОБЪЕКТА-----------------------------------------
+# -----------------------------------------------------------------------------
 
 """
 Раскоментить для платной подписки и нижнюю удалить
@@ -207,7 +222,9 @@ async def cascade(callback: CallbackQuery, state: FSMContext):
 # !!!Закоменьтить перед внедрением платной подписки
 # 👇👇👇👇👇
 
-
+# -----------------------------------------------------------------------------
+# --------------------ДОБАЛЕНИЕ ОБЪЕКТА-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['addobject'])
 async def add_object(message: Message):
     """Ответ на кнопку обавления объекта"""
@@ -216,7 +233,9 @@ async def add_object(message: Message):
             reply_markup=keyboards.add_category_keyboard()
         )
 
-
+# -----------------------------------------------------------------------------
+# --------------------ПОИСК ОБЪЕКТА-----------------------------------------
+# -----------------------------------------------------------------------------
 @dp.callback_query_handler(text="Квартиры")
 async def apartments(callback: CallbackQuery):
     """Ответ на кнопку поиска по квартирам"""
@@ -3225,7 +3244,9 @@ async def land_base_updating(message: Message, state: FSMContext):
         await message.answer_media_group(media=album)
     await state.finish()
 
-
+# -----------------------------------------------------------------------------
+# -------------- МОИ ОБЪЕКТЫ --------------------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['myobjects'])
 async def entering_phone_number_for_searching(message: Message):
     apartment_queryset = Apartment.objects.filter(user_id=message.from_user.id)
@@ -3288,7 +3309,9 @@ async def entering_phone_number_for_searching(message: Message):
             parse_mode='Markdown'
         )
 
-
+# -----------------------------------------------------------------------------
+# -------------- РЕДАКТИРОВНАИЕ ЦЕНЫ-------------------------------------------
+# -----------------------------------------------------------------------------
 @dp.message_handler(commands=['editprice'])
 async def edit_price(message: Message):
     """Ответ на кнопку редактирования цены."""
@@ -3374,14 +3397,12 @@ async def cancel(callback: CallbackQuery, state: FSMContext):
 # -----------------------------------------------------------------------------
 # -------------------ДОБАВЛЕНИЕ КЛИЕНТА----------------------------------------
 # -----------------------------------------------------------------------------
-
-
 @dp.message_handler(commands=['addbuyer'])
 async def add_buyer(message: Message):
     await message.answer(
-        'Внимание! Данные о покупателе будут видны только вам, а так же '
-        + 'вашему руководителю будут видны имя, категория поиска, лимит, '
-        + 'источник оплаты, дата внесения\n\n'
+        # 'Внимание! Данные о покупателе будут видны только вам, а так же '
+        # + 'вашему руководителю будут видны имя, категория поиска, лимит, '
+        # + 'источник оплаты, дата внесения\n\n'
         '✏ Введите имя покупателя\n\n'
         + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
     )
@@ -3410,7 +3431,9 @@ async def add_category(message: Message, state: FSMContext):
         if re.match(r"^[0-9]+$", message.text):
             await state.update_data(buyer_phone_number=message.text)
             await message.answer(
-                'В какой категории покупатель осуществляет поиск?',
+                'В какой категории покупатель осуществляет поиск?\n\n'
+                + '✳ Если ваш покупатель ищет в нескольких категориях, '
+                + 'то заведите его требуемое количество раз с нужными категориями.',
                 reply_markup=keyboards.buyer_searching_category()
             )
             await Buyer.limit.set()
@@ -3459,10 +3482,10 @@ async def add_limit(callback: CallbackQuery, state: FSMContext):
         elif answer == 'поиск_Таунхаусы':
             await state.update_data(buyer_search_category='townhouse')
         else:
-            await state.update_data(buyer_search_category='поиск_Участки')
+            await state.update_data(buyer_search_category='land')
         await callback.message.edit_text(
             '✏ Каков предел суммы покупателя?\n\n'
-            + 'Важно! Напишите полное число со всеми нулями\n\n'
+            + '❗ Напишите полное число со всеми нулями\n\n'
             + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
         )
         await Buyer.source.set()
@@ -3493,9 +3516,6 @@ async def add_source(message: Message, state: FSMContext):
             logging.error(f'{e}')
 
 
-checked = []
-
-
 @dp.callback_query_handler(
     state=Buyer.microregion,
     text=[
@@ -3513,27 +3533,29 @@ async def add_microregion(callback: CallbackQuery, state: FSMContext):
         )
         await state.finish()
     else:
+        await state.update_data(buyer_source=callback.data)
         data = await state.get_data()
-
+        global checked
         if data.get(
             'buyer_search_category'
         ) in ['1', '2', '3', '4', '5'] or data.get(
             'buyer_search_category'
         ) == 'room':
             await callback.message.edit_text(
-                '✏ Укажите микрорайон поиска',
+                '✏ Укажите один или несколько микрорайонов поиска',
                 reply_markup=keyboards.city_microregion_keyboard(checked_buttons=[])
             )
-            global checked
             checked = []
             await Buyer.city_microregion.set()
         if data.get(
             'buyer_search_category'
         ) in ['house', 'townhouse', 'land']:
             await callback.message.edit_text(
-                '✏ Укажите микрорайон поиска',
-                reply_markup=keyboards.microregion_keyboard('subject')
+                '✏ Укажите один или несколько микрорайонов поиска',
+                reply_markup=keyboards.country_microregion_keyboard(checked_buttons=[])
             )
+            checked = []
+            await Buyer.country_microregion.set()
 
 
 @dp.callback_query_handler(
@@ -3549,8 +3571,11 @@ async def city_microreg_checkbox(callback: CallbackQuery, state: FSMContext):
         await state.finish()
     else:
         if answer == 'Подтвердить выбор':
+            await state.update_data(microregions=checked)
             await callback.message.edit_text(
-                'Подтверждено'
+                '✏ Добавьте необходимый, по вашему мнению, комментарий к покупателю'
+                + '(банк, что продаёт, сумму ПВ, без ПВ, и т.п.)\n\n'
+                + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
             )
             await Buyer.base_update.set()
         else:
@@ -3559,17 +3584,17 @@ async def city_microreg_checkbox(callback: CallbackQuery, state: FSMContext):
             else:
                 checked.append(answer)
             await callback.message.edit_text(
-                '✏ Укажите микрорайон поиска',
+                '✏ Укажите один или несколько микрорайонов поиска',
                 reply_markup=keyboards.city_microregion_keyboard(checked_buttons=checked)
             )
             await Buyer.city_microregion.set()
 
 
 @dp.callback_query_handler(
-    state=Buyer.initial_payment,
-    text='dgdg'
+    state=Buyer.country_microregion,
+    text=object_country_microregions_for_checking
 )
-async def add_inital_payment(callback: CallbackQuery, state: FSMContext):
+async def country_microreg_checkbox(callback: CallbackQuery, state: FSMContext):
     answer = callback.data
     if answer == 'Отменить внесение покупателя':
         await callback.message.edit_text(
@@ -3577,40 +3602,263 @@ async def add_inital_payment(callback: CallbackQuery, state: FSMContext):
         )
         await state.finish()
     else:
-        await state.update_data(buyer_source=answer)
-        if answer == 'Ипотечный кредит':
+        if answer == 'Подтвердить выбор':
+            await state.update_data(microregions=checked)
             await callback.message.edit_text(
-                    '✏ У покупателя есть ПВ?',
-                    reply_markup=keyboards.yes_no_keyboard('initial_payment')
+                '✏ Добавьте необходимый, по вашему мнению, комментарий к покупателю'
+                + '(банк, что продаёт, сумму ПВ, без ПВ, и т.п.)\n\n'
+                + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
             )
-        await Buyer.microregion.set()
-
-
-@dp.callback_query_handler(
-    state=Buyer.comment,
-    text=object_microregions.append('Отменить внесение покупателя')
-)
-async def add_comment(callback: CallbackQuery, state: FSMContext):
-    if callback.data == 'Отменить внесение покупателя':
-        await callback.message.answer(
-            'Действие по добавлению покупателя отменено'
-        )
-        await state.finish()
-    else:
-        data = await state.get_data()
-        if not data.get('buyer_microregion'):
-            await state.update_data(buyer_microregion=callback.data)
-        await callback.message.edit_text(
-            '✏ Добавьте необходимый комментраий к покупателю'
-            + '(банк, что продаёт, сумму ПВ и т.п.)\n\n'
-            + '🙅‍♂️ Чтобы отменить внесение покупателя, напишите "Стоп"'
-        )
-        await Buyer.base_update.set()
+            await Buyer.base_update.set()
+        else:
+            if '✅' in answer:
+                checked.remove(answer.removeprefix('✅ '))
+            else:
+                checked.append(answer)
+            await callback.message.edit_text(
+                '✏ Укажите один или несколько микрорайонов поиска',
+                reply_markup=keyboards.country_microregion_keyboard(checked_buttons=checked)
+            )
+            await Buyer.country_microregion.set()
 
 
 @dp.message_handler(state=Buyer.base_update)
 async def base_update(message: Message, state: FSMContext):
-    await state.update_data(buyer_comment=message.text)
-    data = await state.get_data()
-    print(data)
-    await state.finish()
+    if message.text == 'Стоп':
+        await message.answer('Действие по добавлению покупателя отменено')
+        await state.finish()
+    else:
+        if len(message.text) <= 500:
+            await state.update_data(buyer_comment=message.text, buyer_user_id=message.from_user.id)
+            data = await state.get_data()
+            # добавление в базу субъекта
+            if not DB_Worker.buyer_to_db(data):
+                await message.answer(
+                    message_texts.on.get('sorry_about_error')
+                )
+            else:
+                await message.answer('\n'.join(message_texts.buyer_adding_result_text(data=data)))
+            await state.finish()
+
+
+            # СЮДА ДОБАВИТЬ КОД НА СОВПАДЕНИЕ И ОТПРАВКУ ССОБЩЕНИЯ
+
+        else:
+            await message.answer(
+                'Комментарий по клиенту не должен превышать 500 знаков. Отредактируйте и попробуйте заново.'
+            )
+            await Buyer.base_update.set()
+
+# -----------------------------------------------------------------------------
+# -------------------УДАЛЕНИЕ КЛИЕНТА------------------------------------------
+# -----------------------------------------------------------------------------
+
+
+@dp.message_handler(commands=['deletebuyer'])
+async def delete_buyer(message: Message):
+    user_id = message.from_user.id
+    if BuyerDB.objects.filter(user_id=user_id).exists():
+        await message.answer(
+            '✏ Выберите покупатея, которого вы хотите удалить',
+            reply_markup=keyboards.buyer_list_keyboard(searching_user_id=user_id)
+        )
+        await DeleteBuyer.step2.set()
+    else:
+        await message.answer(
+            ' У вас нет клиентов в базе'
+        )
+
+
+@dp.callback_query_handler(state=DeleteBuyer.step2)
+async def deleting_buyer(
+    callback: CallbackQuery, state: FSMContext
+):
+    if callback.data == 'Отмена':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        id = callback.data
+        try:
+            BuyerDB.objects.filter(pk=id).delete()
+            await callback.message.answer(
+                'Сделано!'
+            )
+            await state.finish()
+        except Exception as e:
+            await callback.message.answer(
+                'Во время удаления возникла ошибка, попробуйте снова.'
+                + 'Если ошибка поторится, напишиет об этом @davletelvir'
+            )
+            logging.error(
+                f'Ошибка удаления субъекта, {e}'
+            )
+            await DeleteBuyer.step2.set()
+
+
+# -----------------------------------------------------------------------------
+# -------------------МОИ КЛИЕНТЫ------------------------------------------
+# -----------------------------------------------------------------------------
+
+
+@dp.message_handler(commands=['mybuyers'])
+async def my_buyers(message: Message):
+    user_id = message.from_user.id
+    queryset = BuyerDB.objects.filter(user_id=user_id)
+    if queryset.exists():
+        await message.answer(
+            f'У тебя {queryset.count()} покупателя(-ей):'
+        )
+        for item in queryset:
+            await message.answer(
+                f'*Имя:* {item.buyer_name},\n'
+                + f'*Тел:* {item.phone_number},\n\n'
+                + f'*Объект поиска:* {Output.search_category_output(item.category)},\n'
+                + f'*Область поиска:* {item.microregion},\n\n'
+                + f'*Денежный лимит:* {item.limit} ₽,\n'
+                + f'*Денежный ресурс:* {item.source},\n\n'
+                + f'*Комментарий:* {item.comment}',
+                parse_mode='Markdown'
+            )
+    else:
+        await message.answer(
+            ' У тебя нет клиентов в базе'
+        )
+
+# -----------------------------------------------------------------------------
+# -------------------ОБЪЕКТЫ ДЛЯ КЛИЕНТА---------------------------------------
+# -----------------------------------------------------------------------------
+
+
+@dp.message_handler(commands=['obj4mybuyer'])
+async def obj_for_my_buyer(message: Message):
+    user_id = message.from_user.id
+    queryset = BuyerDB.objects.filter(user_id=user_id)
+    if queryset.exists():
+        await message.answer(
+            '✏ Выберите покупатея, для которого вы хотите посмотреть подходящие объекты',
+            reply_markup=keyboards.buyer_list_keyboard(searching_user_id=user_id)
+        )
+        await ObjForBuyer.step2.set()
+    else:
+        await message.answer(
+            ' У вас нет клиентов в базе'
+        )
+
+
+@dp.callback_query_handler(state=ObjForBuyer.step2)
+async def searching_for_buyer(
+    callback: CallbackQuery, state: FSMContext
+):
+    if callback.data == 'Отмена':
+        await callback.message.edit_text(
+            'Действие отменено'
+        )
+        await state.finish()
+    else:
+        id = callback.data
+        buyer = BuyerDB.objects.filter(pk=id)
+        buyer_category = await buyer.values('category').aget()
+        buyer_limit = await buyer.values('limit').aget()
+
+        class_name = Output.str_to_class(buyer_category.get('category').title())
+
+        # if class_name == Townhouse:
+        #     class_name = TownHouse
+
+        queryset = class_name.objects.filter(price__lte=(buyer_limit.get('limit')))
+
+        await callback.message.answer('🔎 Возможно, покупателю подойдут такие варианты:')
+
+        if class_name == House:
+            for item in queryset:
+                await asyncio.sleep(0.5)
+                album = MediaGroup()
+                photo_list = item.photo_id
+                for photo_id in photo_list:
+                    if photo_id == photo_list[-1]:
+                        album.attach_photo(
+                            photo_id,
+                            caption=message_texts.house_search_result_text(
+                                item=item
+                            ),
+                            parse_mode='Markdown'
+                        )
+                    else:
+                        album.attach_photo(photo_id)
+                await callback.message.answer_media_group(media=album)
+
+        elif class_name == TownHouse:
+            for item in queryset:
+                await asyncio.sleep(0.5)
+                album = MediaGroup()
+                photo_list = item.photo_id
+                for photo_id in photo_list:
+                    if photo_id == photo_list[-1]:
+                        album.attach_photo(
+                            photo_id,
+                            caption=message_texts.townhouse_search_result_text(
+                                item=item
+                            ),
+                            parse_mode='Markdown'
+                        )
+                    else:
+                        album.attach_photo(photo_id)
+                await callback.message.answer_media_group(media=album)
+
+        elif class_name == Land:
+            for item in queryset:
+                await asyncio.sleep(0.5)
+                album = MediaGroup()
+                photo_list = item.photo_id
+                for photo_id in photo_list:
+                    if photo_id == photo_list[-1]:
+                        album.attach_photo(
+                            photo_id,
+                            caption=message_texts.lands_search_result_text(
+                                item=item
+                            ),
+                            parse_mode='Markdown'
+                        )
+                    else:
+                        album.attach_photo(photo_id)
+                await callback.message.answer_media_group(media=album)
+
+        elif class_name == Apartment:
+            for item in queryset:
+                await asyncio.sleep(0.5)
+                album = MediaGroup()
+                photo_list = item.photo_id
+                for photo_id in photo_list:
+                    if photo_id == photo_list[-1]:
+                        album.attach_photo(
+                            photo_id,
+                            caption=message_texts.apartments_search_result_text(
+                                    room_count=int(buyer_category.get('category')),
+                                    item=item
+                                ),
+                            parse_mode='Markdown'
+                        )
+                    else:
+                        album.attach_photo(photo_id)
+                await callback.message.answer_media_group(media=album)
+
+        else:
+            for item in queryset:
+                await asyncio.sleep(0.5)
+                album = MediaGroup()
+                photo_list = item.photo_id
+                for photo_id in photo_list:
+                    if photo_id == photo_list[-1]:
+                        album.attach_photo(
+                            photo_id,
+                            caption=message_texts.room_search_result_text(item=item),
+                            parse_mode='Markdown'
+                        )
+                    else:
+                        album.attach_photo(photo_id)
+                await callback.message.answer_media_group(media=album)
+        await state.finish()
+
+        print(buyer_category.get('category'), buyer_limit.get('limit'))

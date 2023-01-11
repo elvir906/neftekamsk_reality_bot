@@ -421,6 +421,21 @@ class message_texts():
                 + 'Ниже список Ваших объектов с указанием id:')
         return text
 
+    def buyer_adding_result_text(data):
+        text = [
+            '✅ Готово! Вы внесли покупателя в свою базу:',
+            f'Имя: {data.get("buyer_name")}',
+            f'Номер телефона: {data.get("buyer_phone_number")}',
+            f'Ищет: {Output.search_category_output(data.get("buyer_search_category"))}',
+            f'Лимит: {data.get("buyer_limit")} ₽',
+            f'Источник оплаты: {data.get("buyer_source")}',
+            f'Микрорайон поиска: {", ".join(data.get("microregions"))}',
+            f'Комментарий: {data.get("buyer_comment")}',
+            '',
+            '❎ Не забудьте удалить покупателя по завершении сделки. Удалить покупателя можно через пункт меню'
+        ]
+        return text
+
     def aqidel():
         text = ('Гипотеза засыпанного русла.\n\n'
                 + 'Вы будете удивлены, но река Белая раньше '

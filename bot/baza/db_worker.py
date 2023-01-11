@@ -2,7 +2,7 @@ import datetime as dt
 import logging
 
 from aiogram.dispatcher import FSMContext
-from baza.models import Apartment, House, Land, Room, TownHouse
+from baza.models import Apartment, House, Land, Room, TownHouse, Buyer
 # from decouple import config
 
 # DB_NAME = config('DB_NAME')
@@ -169,6 +169,24 @@ class DB_Worker():
                 photo_id=state_data.get('land_photo'),
                 code_word=state_data.get('land_code_word'),
                 user_id=state_data.get('land_user_id'),
+                pub_date=dt.datetime.now()
+            )
+            return True
+        except Exception as e:
+            logging.error(f'{e}')
+            return False
+
+    def buyer_to_db(state_data: FSMContext) -> bool:
+        try:
+            Buyer.objects.create(
+                user_id=state_data.get('buyer_user_id'),
+                phone_number=state_data.get('buyer_phone_number'),
+                buyer_name=state_data.get('buyer_name'),
+                category=state_data.get('buyer_search_category'),
+                limit=state_data.get('buyer_limit'),
+                source=state_data.get('buyer_source'),
+                microregion=", ".join(state_data.get('microregions')),
+                comment=state_data.get('buyer_comment'),
                 pub_date=dt.datetime.now()
             )
             return True

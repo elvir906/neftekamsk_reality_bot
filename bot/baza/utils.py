@@ -2,9 +2,35 @@ import sys
 
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.types.inline_keyboard import InlineKeyboardButton
-from baza.models import Apartment, House, Land, Room, TownHouse
+from baza.models import Apartment, House, Land, Room, TownHouse, Buyer
+
+object_country_microregions_for_checking = [
+    'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
+    'Марино', 'Телевышка', 'Лесная поляна',
+    'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
+    'Кутлинка', 'Новонагаево', 'Актанышбаш',
+    'Амзя', 'Карманово', 'Можары', 'Арлан',
+    'Зубовка', 'Кариево',
+    '✅ Касёво', '✅ Восточный 1,2,3,4,5', '✅ Ротково',
+    '✅ Марино', '✅ Телевышка', '✅ Лесная поляна',
+    '✅ Михайловка', '✅ Ташкиново', '✅ Николо-Берёзовка',
+    '✅ Кутлинка', '✅ Новонагаево', '✅ Актанышбаш',
+    '✅ Амзя', '✅ Карманово', '✅ Можары', '✅ Арлан',
+    '✅ Зубовка', '✅Кариево',
+    'Отменить внесение покупателя',
+    'Подтвердить выбор'
+]
 
 object_microregions = [
+    'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
+    'Марино', 'Телевышка', 'Лесная поляна',
+    'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
+    'Кутлинка', 'Новонагаево', 'Актанышбаш',
+    'Амзя', 'Карманово', 'Можары', 'Арлан',
+    'Зубовка', 'Кариево'
+]
+
+object_microregions_for_buyer = [
     'Касёво', 'Восточный 1,2,3,4,5', 'Ротково',
     'Марино', 'Телевышка', 'Лесная поляна',
     'Михайловка', 'Ташкиново', 'Николо-Берёзовка',
@@ -217,25 +243,40 @@ class keyboards():
 
     def city_microregion_keyboard(checked_buttons: list):
         """Генерация клавиатуры на выбор микрорайона города"""
-
         keyboard = InlineKeyboardMarkup()
-
         new_kbd_btns = ['✅ ' + x if x in checked_buttons else x for x in object_city_microregions]
-
         buttons = [
             InlineKeyboardButton(
                 text=new_kbd_btns[i],
                 callback_data=new_kbd_btns[i]
                 ) for i in range(0, len(new_kbd_btns) - 1)
         ]
-
         keyboard.add(*buttons)
-
         accept_button = 'Подтвердить выбор'
         keyboard.row(
             InlineKeyboardButton(text=accept_button, callback_data=accept_button)
         )
+        cancel_button = 'Отменить внесение покупателя'
+        keyboard.row(
+            InlineKeyboardButton(text=cancel_button, callback_data=cancel_button)
+        )
+        return keyboard
 
+    def country_microregion_keyboard(checked_buttons: list):
+        """Генерация клавиатуры на выбор района"""
+        keyboard = InlineKeyboardMarkup()
+        new_kbd_btns = ['✅ ' + x if x in checked_buttons else x for x in object_microregions_for_buyer]
+        buttons = [
+            InlineKeyboardButton(
+                text=new_kbd_btns[i],
+                callback_data=new_kbd_btns[i]
+                ) for i in range(0, len(new_kbd_btns) - 1)
+        ]
+        keyboard.add(*buttons)
+        accept_button = 'Подтвердить выбор'
+        keyboard.row(
+            InlineKeyboardButton(text=accept_button, callback_data=accept_button)
+        )
         cancel_button = 'Отменить внесение покупателя'
         keyboard.row(
             InlineKeyboardButton(text=cancel_button, callback_data=cancel_button)
@@ -505,6 +546,31 @@ class keyboards():
         )
         return keyboard
 
+    def buyer_list_keyboard(searching_user_id):
+        buyer_queryset = Buyer.objects.filter(
+            user_id=searching_user_id
+        )
+        buttons = []
+        callback_data_string = []
+        for item in buyer_queryset:
+            buttons.append(f'👤 {item.buyer_name}, '
+                           + f'ищет {Output.search_category_output(item.category)} за {item.limit} ₽')
+            callback_data_string.append(item.pk)
+
+        keyboard = InlineKeyboardMarkup()
+        for i in range(0, len(buttons)):
+            keyboard.row(
+                InlineKeyboardButton(
+                    buttons[i],
+                    callback_data=callback_data_string[i]
+                )
+            )
+        cancel_button = 'Отмена'
+        keyboard.row(
+            InlineKeyboardButton(cancel_button, callback_data=cancel_button)
+        )
+        return keyboard
+
 
 class Output():
     def false_or_true(item: bool) -> str:
@@ -514,4 +580,26 @@ class Output():
 
     # Строку в название класса
     def str_to_class(str):
+        if str in ['1', '2', '3', '4', '5']:
+            str = 'Apartment'
         return getattr(sys.modules[__name__], str)
+
+    def search_category_output(item):
+        if item == '1':
+            return '1к.кв.'
+        if item == '2':
+            return '2к.кв.'
+        if item == '3':
+            return '3к.кв.'
+        if item == '4':
+            return '4к.кв.'
+        if item == '5':
+            return '5к.кв.'
+        if item == 'room':
+            return 'Комнату или КГТ'
+        if item == 'house':
+            return 'Дом'
+        if item == 'townhouse':
+            return 'Таунхаус'
+        if item == 'land':
+            return 'Участок'
