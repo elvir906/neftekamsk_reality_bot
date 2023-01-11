@@ -3764,9 +3764,6 @@ async def searching_for_buyer(
 
         class_name = Output.str_to_class(buyer_category.get('category').title())
 
-        # if class_name == Townhouse:
-        #     class_name = TownHouse
-
         queryset = class_name.objects.filter(price__lte=(buyer_limit.get('limit')))
 
         await callback.message.answer('🔎 Возможно, покупателю подойдут такие варианты:')

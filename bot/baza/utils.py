@@ -582,6 +582,8 @@ class Output():
     def str_to_class(str):
         if str in ['1', '2', '3', '4', '5']:
             str = 'Apartment'
+        if str == 'Townhouse':
+            str = 'TownHouse'
         return getattr(sys.modules[__name__], str)
 
     def search_category_output(item):
