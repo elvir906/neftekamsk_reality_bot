@@ -3774,94 +3774,99 @@ async def searching_for_buyer(
 
         queryset = class_name.objects.filter(price__lte=(buyer_limit.get('limit')))
 
-        await callback.message.answer('🔎 Возможно, покупателю подойдут такие варианты:')
+        if queryset.exists():
+            await callback.message.answer('🔎 Возможно, покупателю подойдут такие варианты:')
 
-        if class_name == House:
-            for item in queryset:
-                await asyncio.sleep(0.5)
-                album = MediaGroup()
-                photo_list = item.photo_id
-                for photo_id in photo_list:
-                    if photo_id == photo_list[-1]:
-                        album.attach_photo(
-                            photo_id,
-                            caption=message_texts.house_search_result_text(
-                                item=item
-                            ),
-                            parse_mode='Markdown'
-                        )
-                    else:
-                        album.attach_photo(photo_id)
-                await callback.message.answer_media_group(media=album)
-
-        elif class_name == TownHouse:
-            for item in queryset:
-                await asyncio.sleep(0.5)
-                album = MediaGroup()
-                photo_list = item.photo_id
-                for photo_id in photo_list:
-                    if photo_id == photo_list[-1]:
-                        album.attach_photo(
-                            photo_id,
-                            caption=message_texts.townhouse_search_result_text(
-                                item=item
-                            ),
-                            parse_mode='Markdown'
-                        )
-                    else:
-                        album.attach_photo(photo_id)
-                await callback.message.answer_media_group(media=album)
-
-        elif class_name == Land:
-            for item in queryset:
-                await asyncio.sleep(0.5)
-                album = MediaGroup()
-                photo_list = item.photo_id
-                for photo_id in photo_list:
-                    if photo_id == photo_list[-1]:
-                        album.attach_photo(
-                            photo_id,
-                            caption=message_texts.lands_search_result_text(
-                                item=item
-                            ),
-                            parse_mode='Markdown'
-                        )
-                    else:
-                        album.attach_photo(photo_id)
-                await callback.message.answer_media_group(media=album)
-
-        elif class_name == Apartment:
-            for item in queryset:
-                await asyncio.sleep(0.5)
-                album = MediaGroup()
-                photo_list = item.photo_id
-                for photo_id in photo_list:
-                    if photo_id == photo_list[-1]:
-                        album.attach_photo(
-                            photo_id,
-                            caption=message_texts.apartments_search_result_text(
-                                    room_count=int(buyer_category.get('category')),
+            if class_name == House:
+                for item in queryset:
+                    await asyncio.sleep(0.5)
+                    album = MediaGroup()
+                    photo_list = item.photo_id
+                    for photo_id in photo_list:
+                        if photo_id == photo_list[-1]:
+                            album.attach_photo(
+                                photo_id,
+                                caption=message_texts.house_search_result_text(
                                     item=item
                                 ),
-                            parse_mode='Markdown'
-                        )
-                    else:
-                        album.attach_photo(photo_id)
-                await callback.message.answer_media_group(media=album)
+                                parse_mode='Markdown'
+                            )
+                        else:
+                            album.attach_photo(photo_id)
+                    await callback.message.answer_media_group(media=album)
 
+            elif class_name == TownHouse:
+                for item in queryset:
+                    await asyncio.sleep(0.5)
+                    album = MediaGroup()
+                    photo_list = item.photo_id
+                    for photo_id in photo_list:
+                        if photo_id == photo_list[-1]:
+                            album.attach_photo(
+                                photo_id,
+                                caption=message_texts.townhouse_search_result_text(
+                                    item=item
+                                ),
+                                parse_mode='Markdown'
+                            )
+                        else:
+                            album.attach_photo(photo_id)
+                    await callback.message.answer_media_group(media=album)
+
+            elif class_name == Land:
+                for item in queryset:
+                    await asyncio.sleep(0.5)
+                    album = MediaGroup()
+                    photo_list = item.photo_id
+                    for photo_id in photo_list:
+                        if photo_id == photo_list[-1]:
+                            album.attach_photo(
+                                photo_id,
+                                caption=message_texts.lands_search_result_text(
+                                    item=item
+                                ),
+                                parse_mode='Markdown'
+                            )
+                        else:
+                            album.attach_photo(photo_id)
+                    await callback.message.answer_media_group(media=album)
+
+            elif class_name == Apartment:
+                for item in queryset:
+                    await asyncio.sleep(0.5)
+                    album = MediaGroup()
+                    photo_list = item.photo_id
+                    for photo_id in photo_list:
+                        if photo_id == photo_list[-1]:
+                            album.attach_photo(
+                                photo_id,
+                                caption=message_texts.apartments_search_result_text(
+                                        room_count=int(buyer_category.get('category')),
+                                        item=item
+                                    ),
+                                parse_mode='Markdown'
+                            )
+                        else:
+                            album.attach_photo(photo_id)
+                    await callback.message.answer_media_group(media=album)
+
+            else:
+                for item in queryset:
+                    await asyncio.sleep(0.5)
+                    album = MediaGroup()
+                    photo_list = item.photo_id
+                    for photo_id in photo_list:
+                        if photo_id == photo_list[-1]:
+                            album.attach_photo(
+                                photo_id,
+                                caption=message_texts.room_search_result_text(item=item),
+                                parse_mode='Markdown'
+                            )
+                        else:
+                            album.attach_photo(photo_id)
+                    await callback.message.answer_media_group(media=album)
         else:
-            for item in queryset:
-                await asyncio.sleep(0.5)
-                album = MediaGroup()
-                photo_list = item.photo_id
-                for photo_id in photo_list:
-                    if photo_id == photo_list[-1]:
-                        album.attach_photo(
-                            photo_id,
-                            caption=message_texts.room_search_result_text(item=item),
-                            parse_mode='Markdown'
-                        )
-                    else:
-                        album.attach_photo(photo_id)
-                await callback.message.answer_media_group(media=album)
+            await callback.message.edit_text(
+                'К сожалению, ничего не нашёл в базе для твоего клиента'
+            )
         await state.finish()
