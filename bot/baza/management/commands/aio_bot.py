@@ -3638,22 +3638,25 @@ async def base_update(message: Message, state: FSMContext):
                 )
             else:
                 await message.answer('\n'.join(message_texts.buyer_adding_result_text(data=data)))
-                
+
                 class_name = Output.str_to_class(data.get('buyer_search_category').title())
                 queryset = class_name.objects.filter(price__lte=data.get('buyer_limit'))
                 if queryset.exists():
                     for item in queryset:
                         await bot.send_message(
-                            chat_id=item.user_id, text=f'У пользователя '
-                            + f'@{message.from_user.username} есть возможный '
-                            + 'покупатель на твой объект '
-                            + f'{Output.search_category_output(data.get("buyer_search_category"))}, ул.{item.street_name}'
+                            chat_id=item.user_id, text='🚀 У пользователя '
+                            + f'@{message.from_user.username}, '
+                            + 'есть возможный '
+                            + 'покупатель на твой объект\n'
+                            + f'{Output.search_category_output(data.get("buyer_search_category"))}, '
+                            + f'ул.{item.street_name}'
                         )
 
             await state.finish()
         else:
             await message.answer(
-                'Комментарий по клиенту не должен превышать 500 знаков. Отредактируйте и попробуйте заново.'
+                'Комментарий по клиенту не должен превышать 500 знаков. '
+                + 'Отредактируйте и попробуйте заново.'
             )
             await Buyer.base_update.set()
 
@@ -3690,7 +3693,7 @@ async def deleting_buyer(
         id = callback.data
         try:
             BuyerDB.objects.filter(pk=id).delete()
-            await callback.message.answer(
+            await callback.message.edit_text(
                 'Сделано!'
             )
             await state.finish()
@@ -3720,6 +3723,7 @@ async def my_buyers(message: Message):
         )
         for item in queryset:
             await message.answer(
+                f'❇ _Дата внесения: {item.pub_date.date().strftime("%d-%m-%Y")}_\n'
                 f'*Имя:* {item.buyer_name},\n'
                 + f'*Тел:* {item.phone_number},\n\n'
                 + f'*Объект поиска:* {Output.search_category_output(item.category)},\n'
